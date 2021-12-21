@@ -8,7 +8,7 @@
 # include <memory>
 # include <stdexcept>
 # include "pair.hpp"
-// # include "iterator_traits.hpp"
+# include "iterator_traits.hpp"
 # define MAX_RAM 4294967296
 
 namespace ft

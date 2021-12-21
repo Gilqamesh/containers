@@ -5,17 +5,7 @@
 //                       Iterator_traits Class                                //
 // ************************************************************************** //
 
-# include <cstddef>
-
-template <typename Category, typename T, typename Distance = ptrdiff_t,
-		  typename Pointer = T*, typename Reference = T&>
-class iterator
-{
-	typedef T			value_type;
-	typedef Distance	difference_type;
-	typedef Pointer		pointer;
-	typedef Reference	reference;
-};
+# include "iterator.hpp"
 
 template <typename Iterator>
 class iterator_traits
