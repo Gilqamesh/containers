@@ -1,19 +1,13 @@
 #ifndef TYPE_TRAITS_HPP
 # define TYPE_TRAITS_HPP
 
-// ************************************************************************** //
-//                                 Type Traits                                //
-// ************************************************************************** //
-
 // remove const
 template <class T> struct remove_const			{ typedef T type; };
 template <class T> struct remove_const<const T>	{ typedef T type; };
 
+// is_integral
 template <typename T, T v>
-struct integral_constant
-{
-	static const T	value = v;
-};
+struct integral_constant { static const T value = v; };
 
 typedef integral_constant<bool, true>  true_type;
 typedef integral_constant<bool, false> false_type;
@@ -36,4 +30,11 @@ template <>				struct __libcppis_integral<unsigned long long>	: public true_type
 template <typename T>	struct is_integral
 	: public __libcppis_integral<typename remove_const<T>::type> { };
 
-#endif /* TYPE_TRAITS_HPP */
+// enable_if
+template <bool B, typename T = void>
+struct enable_if { };
+
+template <typename T>
+struct enable_if<true, T> { typedef T type; };
+
+#endif

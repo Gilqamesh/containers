@@ -1,10 +1,6 @@
 #ifndef VECTOR_HPP
 # define VECTOR_HPP
 
-// ************************************************************************** //
-//                                Vector Class                                //
-// ************************************************************************** //
-
 # include <memory>
 # include <stdexcept>
 # include "pair.hpp"
@@ -14,12 +10,12 @@
 namespace ft
 {
 
-template <typename T>
+template <typename T, typename Allocator = std::allocator<T> >
 class vector
 {
 	public:
 		typedef T											value_type;
-		typedef typename std::allocator<value_type>			allocator_type;
+		typedef typename Allocator							allocator_type;
 		typedef typename allocator_type::reference			reference;
 		typedef typename allocator_type::const_reference	const_reference;
 		typedef std::allocator_traits<allocator_type>		__alloc_traits;
@@ -324,4 +320,4 @@ bool	operator>=(const vector<T> &v1, const vector<T> &v2)
 
 } // ft
 
-#endif /* VECTOR_HPP */
+#endif
