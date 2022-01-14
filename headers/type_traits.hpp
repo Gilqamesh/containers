@@ -1,6 +1,9 @@
 #ifndef TYPE_TRAITS_HPP
 # define TYPE_TRAITS_HPP
 
+namespace ft
+{
+
 // remove const
 template <class T> struct remove_const			{ typedef T type; };
 template <class T> struct remove_const<const T>	{ typedef T type; };
@@ -36,5 +39,7 @@ struct enable_if { };
 
 template <typename T>
 struct enable_if<true, T> { typedef T type; };
+
+} // ft
 
 #endif

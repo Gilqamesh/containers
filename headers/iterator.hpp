@@ -2,6 +2,8 @@
 # define ITERATOR_HPP
 
 # include <cstddef>
+# include <memory>
+# include <type_traits>
 
 // DEBUG
 # include <unistd.h>
@@ -39,9 +41,9 @@ template <typename T>
 struct iterator_traits<const T*>
 {
 	typedef ptrdiff_t					difference_type;
-	typedef T							value_type;
-	typedef T*							pointer;
-	typedef T&							reference;
+	typedef const T						value_type;
+	typedef const T*					pointer;
+	typedef const T&					reference;
 	typedef random_access_iterator_tag	iterator_category;
 };
 
@@ -68,27 +70,116 @@ public:
 	typedef typename iterator_traits<Iter>::iterator_category	iterator_category;
 
 	reverse_iterator()
-		: current()
+		: current() { } // tested
+	explicit reverse_iterator(iterator_type x) // tested
+		: current(x) { }
+	template <class U> // idk how to test this
+	reverse_iterator(const reverse_iterator<U>& other)
+		: current(other.base()) { }
+	~reverse_iterator() { }
+	template <class U> // idk how to test this
+	reverse_iterator &operator=(const reverse_iterator<U>& other)
 	{
 		write(STDOUT_FILENO, "a\n", 2);
+		if (this != &other)
+		{
+			current = other.current;
+		}
+		return (*this);
 	}
-	// explicit reverse_iterator(iterator_type x)
-	// 	: current(x)
-	// {
-	// 	write(STDOUT_FILENO, "b\n", 2);
-	// }
-	// template <class U>
-	// reverse_iterator(const reverse_iterator<U>& other)
-	// 	: current(other)
-	// {
-	// 	write(STDOUT_FILENO, "c\n", 2);
-	// }
-	// ~reverse_iterator() { }
+	iterator_type base(void) const { return (current); } // tested
+	reference operator*() const { return (*(current - 1)); } // tested
+	pointer operator->() const { return (std::addressof(operator*())); } // tested
+	reference operator[](difference_type n) const { return (*(current - n - 1)); } // tested
+	reverse_iterator &operator++() // tested
+	{
+		current = current - 1;
+		return (*this);
+	}
+	reverse_iterator &operator--() // tested
+	{
+		current = current + 1;
+		return (*this);
+	}
+	reverse_iterator operator++(int) // tested
+	{
+		reverse_iterator temp(current);
+		current = current - 1;
+		return (temp);
+	}
+	reverse_iterator operator--(int) // tested
+	{
+		reverse_iterator temp(current);
+		current = current + 1;
+		return (temp);
+	}
+	reverse_iterator operator+(difference_type n) const { return (static_cast<reverse_iterator>(current - n)); } // tested
+	reverse_iterator operator-(difference_type n) const { return (static_cast<reverse_iterator>(current + n)); } // tested
+	reverse_iterator &operator+=(difference_type n) // tested
+	{
+		current = current - n;
+		return (*this);
+	}
+	reverse_iterator &operator-=(difference_type n) // tested
+	{
+		current = current + n;
+		return (*this);
+	}
 
 private:
 	iterator_type	current;
 };
 
+// const_reverse_iterator
+
+template <typename Iter1, typename Iter2> // tested
+bool operator==(const reverse_iterator<Iter1>& a, const reverse_iterator<Iter2>& b)
+{
+	return (a.base() == b.base());
+}
+
+template <typename Iter1, typename Iter2> // tested
+bool operator!=(const reverse_iterator<Iter1>& a, const reverse_iterator<Iter2>& b)
+{
+	return (a.base() != b.base());
+}
+
+template <typename Iter1, typename Iter2> // tested
+bool operator<(const reverse_iterator<Iter1>& a, const reverse_iterator<Iter2>& b)
+{
+	return (a.base() > b.base());
+}
+
+template <typename Iter1, typename Iter2> // tested
+bool operator<=(const reverse_iterator<Iter1>& a, const reverse_iterator<Iter2>& b)
+{
+	return (a.base() >= b.base());
+}
+
+template <typename Iter1, typename Iter2> // tested
+bool operator>(const reverse_iterator<Iter1>& a, const reverse_iterator<Iter2>& b)
+{
+	return (a.base() < b.base());
+}
+
+template <typename Iter1, typename Iter2> // tested
+bool operator>=(const reverse_iterator<Iter1>& a, const reverse_iterator<Iter2>& b)
+{
+	return (a.base() <= b.base());
+}
+
+template <typename Iter> // tested
+reverse_iterator<Iter> operator+(typename reverse_iterator<Iter>::difference_type n, const reverse_iterator<Iter> &a)
+{
+	return (a + n);
+}
+
+template <typename Iter> // tested
+typename reverse_iterator<Iter>::difference_type operator-(const reverse_iterator<Iter>& a, const reverse_iterator<Iter>& b)
+{
+	return (b.base() - a.base());
+}
+
 } // ft
 
-#endif /* ITERATOR_HPP */
+#endif

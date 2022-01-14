@@ -5,6 +5,7 @@
 # include <stdexcept>
 # include "pair.hpp"
 # include "type_traits.hpp"
+# include "iterator.hpp"
 
 // DEBUG
 # include <iostream>
@@ -16,16 +17,16 @@ template <typename T, typename Allocator = std::allocator<T> >
 class vector
 {
 public:
-	typedef typename std::size_t				size_type;
-	typedef typename Allocator::pointer			pointer;
-	typedef typename Allocator::const_pointer	const_pointer;
-	typedef typename Allocator::pointer			iterator;
-	typedef typename Allocator::const_pointer	const_iterator;
-	typedef iterator							reverse_iterator;
-	typedef const_iterator						const_reverse_iterator;
-	typedef typename Allocator::reference		reference;
-	typedef typename Allocator::const_reference	const_reference;
-	typedef Allocator							allocator_type;
+	typedef typename std::size_t								size_type;
+	typedef typename Allocator::pointer							pointer;
+	typedef typename Allocator::const_pointer					const_pointer;
+	typedef typename Allocator::pointer							iterator; // need to be implemented on forward_iterator
+	typedef typename Allocator::const_pointer					const_iterator; // need to be implemented on forward_iterator
+	typedef typename ft::reverse_iterator<iterator>				reverse_iterator;
+	typedef typename ft::reverse_iterator<const_iterator>		const_reverse_iterator;
+	typedef typename Allocator::reference						reference;
+	typedef typename Allocator::const_reference					const_reference;
+	typedef Allocator											allocator_type;
 	
 	vector() // tested
 		: start(nullptr), finish(nullptr), end_of_storage(nullptr), allocator() { }
@@ -127,10 +128,14 @@ public:
 	const_pointer	data(void) const  { return (start);		 }
 
 	// Iterators
-	iterator		begin(void) 	  { return (start);  } // tested
-	const_iterator	begin(void) const { return (start);  }
-	iterator		end(void)		  { return (finish); } // tested
-	const_iterator	end(void)	const { return (finish); }
+	iterator				begin(void) 	   { return (start);  } // tested
+	const_iterator			begin(void)  const { return (start);  }
+	iterator				end(void)		   { return (finish); } // tested
+	const_iterator			end(void)	 const { return (finish); }
+	reverse_iterator		rbegin(void)	   { return (reverse_iterator(finish)); } // tested
+	const_reverse_iterator	rbegin(void) const { return (const_reverse_iterator(finish)); }
+	reverse_iterator		rend(void)		   { return (reverse_iterator(start)); } // tested
+	const_reverse_iterator	rend(void) const   { return (const_reverse_iterator(start)); }
 
 	// Capacity
 	size_type	size(void) const { return (finish - start); } // tested

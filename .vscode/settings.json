@@ -1,5 +1,6 @@
 {
 	"files.associations": {
+		"*.ejs": "html",
 		"stack": "cpp",
 		"vector": "cpp",
 		"__config": "cpp",
@@ -63,6 +64,12 @@
 		"typeinfo": "cpp",
 		"unordered_map": "cpp",
 		"utility": "cpp",
-		"memory_resource": "cpp"
+		"memory_resource": "cpp",
+		"bit": "cpp",
+		"*.tcc": "cpp",
+		"clocale": "cpp",
+		"numeric": "cpp",
+		"random": "cpp",
+		"fstream": "cpp"
 	}
 }
