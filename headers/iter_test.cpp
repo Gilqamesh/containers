@@ -15,11 +15,9 @@ int main()
 	ft::reverse_iterator<int *> z(y);
 	ft::reverse_iterator<int *> f(b);
 	
-	std::cout << a.base() << std::endl;
-	std::cout << (g - a) << std::endl;
-	std::cout << a.base() << std::endl;
+	std::cout << (a.operator->()) << std::endl;
+	std::cout << (g.operator->()) << std::endl;
 
-	std::cout << d.base() << std::endl;
-	std::cout << (z - d) << std::endl;
-	std::cout << d.base() << std::endl;
+	std::cout << (d.operator->()) << std::endl;
+	std::cout << (z.operator->()) << std::endl;
 }

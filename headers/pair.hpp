@@ -5,6 +5,9 @@
 //                                  Pair Class                                //
 // ************************************************************************** //
 
+namespace ft
+{
+
 template <typename T1, typename T2>
 class pair
 {
@@ -74,5 +77,7 @@ pair<T1, T2>	make_pair(const T1 &a, const T2 &b)
 {
 	return (pair<T1, T2>(a, b));
 }
+
+} // ft
 
 #endif /* PAIR_HPP */

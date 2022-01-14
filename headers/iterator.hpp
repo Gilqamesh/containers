@@ -1,9 +1,7 @@
 #ifndef ITERATOR_HPP
 # define ITERATOR_HPP
 
-# include <cstddef>
 # include <memory>
-# include <type_traits>
 
 // DEBUG
 # include <unistd.h>
@@ -30,7 +28,7 @@ struct iterator_traits
 template <typename T>
 struct iterator_traits<T*>
 {
-	typedef ptrdiff_t					difference_type;
+	typedef std::ptrdiff_t				difference_type;
 	typedef T							value_type;
 	typedef T*							pointer;
 	typedef T&							reference;
@@ -40,14 +38,14 @@ struct iterator_traits<T*>
 template <typename T>
 struct iterator_traits<const T*>
 {
-	typedef ptrdiff_t					difference_type;
+	typedef std::ptrdiff_t				difference_type;
 	typedef const T						value_type;
 	typedef const T*					pointer;
 	typedef const T&					reference;
 	typedef random_access_iterator_tag	iterator_category;
 };
 
-template <typename Category, typename T, typename Distance = ptrdiff_t,
+template <typename Category, typename T, typename Distance = std::ptrdiff_t,
 		  typename Pointer = T*, typename Reference = T&>
 struct iterator
 {
@@ -67,7 +65,7 @@ public:
 	typedef typename iterator_traits<Iter>::value_type			value_type;
 	typedef typename iterator_traits<Iter>::pointer				pointer;
 	typedef typename iterator_traits<Iter>::reference			reference;
-	typedef typename iterator_traits<Iter>::iterator_category	iterator_category;
+	typedef bidirectional_iterator_tag							iterator_category;
 
 	reverse_iterator()
 		: current() { } // tested
@@ -89,7 +87,7 @@ public:
 	}
 	iterator_type base(void) const { return (current); } // tested
 	reference operator*() const { return (*(current - 1)); } // tested
-	pointer operator->() const { return (std::addressof(operator*())); } // tested
+	pointer operator->() const { return (&(operator*())); } // tested
 	reference operator[](difference_type n) const { return (*(current - n - 1)); } // tested
 	reverse_iterator &operator++() // tested
 	{
