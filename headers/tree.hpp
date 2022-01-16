@@ -33,11 +33,11 @@
 // 3. Z.uncle is black (line) -> rotate Z.grandparent in the opposite direction of Z and color Z's original parent and grandparent
 
 # include "functional.hpp"
+# include "algorithm.hpp"
 
 // DEBUG
 # include <string>
 # include <iostream>
-# define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
 
 namespace ft
 {
@@ -114,46 +114,18 @@ public:
 			y->right_child = z;
 		insert_fixup(z);
 	}
-	void 	remove(const T& item)
+	void	remove(const T& item)
 	{
 		node<T>*	Node = search(item);
 		if (Node == NULL)
 			return ;
-		node<T>*	y;
-		if (Node->left_child == NULL || Node->right_child == NULL)
-			y = Node;
-		else
-			y = get_successor(Node);
 		
-		node<T>*	x;
-		if (y->left_child)
-			x = y->left_child;
-		else
-			x = y->right_child;
+		Node = make_node_leaf(Node);
 
-		if (x)
-			x->parent = y->parent;
-		else // TEST IF NEEDED
-		{
-			// node<T>* temp = y;
-			// y->parent->left_child = y->parent;
-			// y = temp;
-		}
-
-		node<T>*	parent = y->parent;
-		if (y->parent == NULL)
-			root = x;
-		else if (y == y->parent->left_child)
-			y->parent->left_child = x;
-		else
-			y->parent->right_child = x;
-
-		if (y != Node)
-			Node->value = y->value;
+		if (Node->color == BLACK)
+			delete_fixup(Node);
 		
-		if (y->color == BLACK)
-			delete_fixup(x);
-		delete y;
+		prune_leaf(Node);
 	}
 
 	// DEBUG
@@ -266,84 +238,41 @@ private:
 			delete_from_node(x->right_child);
 		delete x;
 	}
-	void delete_fixup(node<T>* Node)
+	void delete_fixup(node<T>* x)
 	{
-		if (Node == NULL)
+		if (x == NULL)
 			return ;
-		while (Node != root && Node->color == BLACK)
+		while (x != root && x->color == BLACK)
 		{
-			node<T>*	w;
-			if (Node == Node->parent->left_child)
+			if (sibling(x) && sibling(x)->color == RED)
 			{
-				w = Node->parent->right_child;
-				if (w->color == RED)
-				{
-					w->color = BLACK;
-					Node->parent->color = RED;
-					left_rotate(Node->parent);
-					w = Node->parent->right_child;
-				}
-				if ((w->left_child == NULL || w->left_child->color == BLACK)
-					&& (w->right_child == NULL || w->right_child->color == BLACK))
-				{
-					w->color = RED;
-					Node = Node->parent;
-				}
-				else
-				{
-					if (w->right_child == NULL || w->right_child->color == BLACK)
-					{
-						if (w->left_child)
-							w->left_child->color = BLACK;
-						w->color = RED;
-						right_rotate(w);
-						w = Node->parent->right_child;
-					}
-					w->color = Node->parent->color;
-					Node->parent->color = BLACK;
-					if (w->right_child)
-						w->right_child->color = BLACK;
-					left_rotate(Node->parent);
-					Node = root;
-				}
+				x->parent->color = RED;
+				sibling(x)->color = BLACK;
+				rotate_to_parent(sibling(x));
+			}
+			else if (nephew(x) && nephew(x)->color == RED)
+			{
+				sibling(x)->color = x->parent->color;
+				x->parent->color = BLACK;
+				nephew(x)->color = BLACK;
+				rotate_to_parent(sibling(x));
+				x = root;
+				break ;
+			}
+			else if (niece(x) && niece(x)->color == RED)
+			{
+				niece(x)->color = BLACK;
+				sibling(x)->color = RED;
+				rotate_to_parent(sibling(x));
 			}
 			else
 			{
-				w = Node->parent->left_child;
-				if (w->color == RED)
-				{
-					w->color = BLACK;
-					Node->parent->color = RED;
-					right_rotate(Node->parent);
-					w = Node->parent->left_child;
-				}
-				if ((w->right_child == NULL || w->right_child->color == BLACK)
-					&& (w->left_child == NULL || w->left_child->color == BLACK))
-				{
-					w->color = RED;
-					Node = Node->parent;
-				}
-				else
-				{
-					if (w->left_child == NULL || w->left_child->color == BLACK)
-					{
-						if (w->right_child)
-							w->right_child->color = BLACK;
-						w->color = RED;
-						left_rotate(w);
-						w = Node->parent->left_child;
-					}
-					w->color = Node->parent->color;
-					Node->parent->color = BLACK;
-					if (w->left_child)
-						w->left_child->color = BLACK;
-					right_rotate(Node->parent);
-					Node = root;
-				}
+				sibling(x)->color = RED;
+				x = x->parent;
 			}
 		}
 
-		Node->color = BLACK;
+		x->color = BLACK;
 	}
 	node<T> *get_successor(node<T>* Node)
 	{
@@ -358,11 +287,97 @@ private:
 		}
 		return (p);
 	}
+	node<T> *get_predecessor(node<T> *Node)
+	{
+		if (Node->left_child)
+			return (find_right_most_leaf(Node->left_child));
+		
+		node<T>*	p = Node->parent;
+		while (p && Node == p->left_child)
+		{
+			Node = p;
+			p = p->parent;
+		}
+		return (p);
+	}
 	node<T> *find_left_most_leaf(node<T>* Node)
 	{
 		while (Node->left_child)
 			Node = Node->left_child;
 		return (Node);
+	}
+	node<T> *find_right_most_leaf(node<T>* Node)
+	{
+		while (Node->right_child)
+			Node = Node->right_child;
+		return (Node);
+	}
+	node<T> *sibling(node<T>* Node)
+	{
+		if (Node->parent == NULL)
+			return (NULL);
+		if (Node == Node->parent->left_child)
+			return (Node->parent->right_child);
+		return (Node->parent->left_child);
+	}
+	node<T> *niece(node<T>* Node)
+	{
+		if (sibling(Node) == NULL)
+			return (NULL);
+		if (Node == Node->parent->left_child)
+			return (sibling(Node)->left_child);
+		return (sibling(Node)->right_child);
+	}
+	node<T> *nephew(node<T>* Node)
+	{
+		if (sibling(Node) == NULL)
+			return (NULL);
+		if (Node == Node->parent->left_child)
+			return (sibling(Node)->right_child);
+		return (sibling(Node)->left_child);
+	}
+	void	rotate_to_parent(node<T>* Node)
+	{
+		if (Node == Node->parent->left_child)
+			right_rotate(Node->parent);
+		else
+			left_rotate(Node->parent);
+	}
+	node<T>	*has_one_child(node<T>* Node)
+	{
+		if (Node->left_child && Node->right_child == NULL)
+			return (Node->left_child);
+		if (Node->left_child == NULL && Node->right_child)
+			return (Node->right_child);
+		return (NULL);
+	}
+	node<T>	*make_node_leaf(node<T>* Node)
+	{
+		if (Node->left_child == NULL && Node->right_child == NULL)
+			return (Node);
+		if (has_one_child(Node))
+		{
+			ft::swap(Node->value, has_one_child(Node)->value);
+			Node = has_one_child(Node);
+			return (make_node_leaf(Node));
+		}
+		else
+		{
+			ft::swap(Node->value, get_predecessor(Node)->value);
+			Node = get_predecessor(Node);
+			return (make_node_leaf(Node));
+		}
+	}
+	void	prune_leaf(node<T>* leaf)
+	{
+		if (leaf->parent)
+		{
+			if (leaf == leaf->parent->left_child)
+				leaf->parent->left_child = NULL;
+			else
+				leaf->parent->right_child = NULL;
+		}
+		delete leaf;
 	}
 
 	// DEBUG

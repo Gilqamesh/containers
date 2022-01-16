@@ -1,6 +1,7 @@
 # include <iostream>
 # include "tree.hpp"
 # include <random>
+# include <functional>
 
 int main()
 {
@@ -10,6 +11,8 @@ int main()
 	// 	tree.insert(std::rand() % 10000);
 	for (unsigned int i = 1; i <= 20; ++i)
 		tree.insert(i);
+	tree.print();
+	std::cout << "\n\n\n\n\n";
 	tree.remove(2);
 	tree.remove(4);
 	tree.remove(7);
