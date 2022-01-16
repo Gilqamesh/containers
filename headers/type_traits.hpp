@@ -40,6 +40,13 @@ struct enable_if { };
 template <typename T>
 struct enable_if<true, T> { typedef T type; };
 
+// is_same
+template <class T, class U>
+struct is_same : false_type { };
+
+template <class T>
+struct is_same<T, T> : true_type { };
+
 } // ft
 
 #endif

@@ -10,6 +10,110 @@
 
 namespace ft
 {
+/*
+template <typename Category, typename T, typename Distance = std::ptrdiff_t,
+		  typename Pointer = T*, typename Reference = T&>
+struct iterator
+{
+	typedef Distance	difference_type;
+	typedef T			value_type;
+	typedef Pointer		pointer;
+	typedef Reference	reference;
+	typedef Category	iterator_category;
+};
+*/
+
+template <typename vector>
+class vector_iterator
+{
+public:
+	typedef typename std::ptrdiff_t			difference_type;
+	typedef typename vector::value_type		value_type;
+	typedef typename vector::pointer		pointer;
+	typedef typename vector::reference		reference;
+	typedef random_access_iterator_tag		iterator_category;
+
+	vector_iterator()
+		: m_ptr(NULL) { }
+	vector_iterator(pointer ptr)
+		: m_ptr(ptr) { }
+	vector_iterator(const vector_iterator& other)
+		: m_ptr(other.m_ptr) { }
+	vector_iterator& operator=(const vector_iterator& other)
+	{
+		if (this != &other)
+		{
+			m_ptr = other.m_ptr;
+		}
+		return (*this);
+	}
+
+	vector_iterator& operator++(void)
+	{
+		++m_ptr;
+		return (*this);
+	}
+	vector_iterator operator++(int)
+	{
+		vector_iterator temp(*this);
+		++m_ptr;
+		return (temp);
+	}
+	vector_iterator& operator--(void)
+	{
+		--m_ptr;
+		return (*this);
+	}
+	vector_iterator operator--(int)
+	{
+		vector_iterator temp(*this);
+		--m_ptr;
+		return (temp);
+	}
+	reference operator[](difference_type index)
+	{
+		return *(m_ptr + index);
+	}
+	pointer	operator->()
+	{
+		return (m_ptr);
+	}
+	reference operator*()
+	{
+		return *(m_ptr);
+	}
+	bool operator==(const vector_iterator& other) const
+	{
+		return (m_ptr == other.m_ptr);
+	}
+	bool operator!=(const vector_iterator& other) const
+	{
+		return (!(*this == other));
+	}
+	vector_iterator &operator-=(const vector_iterator& other)
+	{
+		m_ptr = m_ptr - other.m_ptr;
+		return (*this);
+	}
+
+private:
+	pointer	m_ptr;
+};
+
+template <typename vector>
+typename vector_iterator<vector>::difference_type
+operator-(const vector_iterator<vector>& it1, const vector_iterator<vector>& it2)
+{
+	return (it1.m_ptr - it2.m_ptr);
+}
+
+template <typename vector, typename T>
+vector_iterator<vector>
+operator+(const vector_iterator<vector>& it, T a)
+{
+	return (it.m_ptr + a);
+}
+
 
 template <typename T, typename Allocator = std::allocator<T> >
 class vector
@@ -17,9 +121,10 @@ class vector
 public:
 	typedef typename std::size_t								size_type;
 	typedef T													value_type;
-	typedef typename Allocator::pointer							pointer;
-	typedef typename Allocator::const_pointer					const_pointer;
-	typedef typename Allocator::pointer							iterator; // need to be implemented on some iterator
+	typedef T*													pointer;
+	typedef const T*											const_pointer;
+	typedef vector_iterator<vector>								iterator;
+	// typedef typename Allocator::pointer							iterator; // need to be implemented on some iterator
 	typedef typename Allocator::const_pointer					const_iterator; // need to be implemented on some iterator
 	typedef typename ft::reverse_iterator<iterator>				reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>		const_reverse_iterator;
@@ -42,7 +147,7 @@ public:
 	}
 	template <typename InputIt> // tested
 	vector(InputIt first, InputIt last, const Allocator& alloc = Allocator(),
-		typename enable_if< !is_integral<InputIt>::value, InputIt >::type = InputIt())
+		typename ft::enable_if< !is_integral<InputIt>::value, InputIt >::type = InputIt())
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator(alloc)
 	{
 		start = allocator.allocate(last - first);
