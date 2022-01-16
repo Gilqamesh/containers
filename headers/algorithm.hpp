@@ -43,6 +43,14 @@ bool equal(InputIt1 first1, InputIt1 last1, InputIt2 first2, BinaryPredicate p)
 	return (true);
 }
 
+template <typename T>
+void swap(T& a, T& b)
+{
+	T tmp(a);
+	a = b;
+	b = tmp;
+}
+
 } // ft
 
 #endif

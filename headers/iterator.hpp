@@ -3,9 +3,6 @@
 
 # include <memory>
 
-// DEBUG
-# include <unistd.h>
-
 namespace ft
 {
 
@@ -78,7 +75,6 @@ public:
 	template <class U> // idk how to test this
 	reverse_iterator &operator=(const reverse_iterator<U>& other)
 	{
-		write(STDOUT_FILENO, "a\n", 2);
 		if (this != &other)
 		{
 			current = other.current;
