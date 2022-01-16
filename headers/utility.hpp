@@ -1,9 +1,5 @@
-#ifndef PAIR_HPP
-# define PAIR_HPP
-
-// ************************************************************************** //
-//                                  Pair Class                                //
-// ************************************************************************** //
+#ifndef UTILITY_HPP
+# define UTILITY_HPP
 
 namespace ft
 {
@@ -11,29 +7,26 @@ namespace ft
 template <typename T1, typename T2>
 class pair
 {
-	public:
-		typedef T1	first_type;
-		typedef T2	second_type;
+public:
+	typedef T1	first_type;
+	typedef T2	second_type;
 
-		first_type	first;
-		second_type	second;
+	first_type	first;
+	second_type	second;
 
-		pair() { }
-
-		pair(const T1 &a, const T2 &b): first(a), second(b) { }
-
-		~pair() { }
-
-		pair(const pair &a) { *this = a; }
-
-		pair &operator=(const pair &a)
+	pair() { }
+	pair(const T1 &a, const T2 &b): first(a), second(b) { }
+	~pair() { }
+	pair(const pair &a) { *this = a; }
+	pair &operator=(const pair &a)
+	{
+		if (this != &a)
 		{
-			if (this == &a)
-				return (*this);
 			first = a.first;
 			second = a.second;
-			return (*this);
 		}
+		return (*this);
+	}
 };
 
 template <typename T1, typename T2>
@@ -80,4 +73,4 @@ pair<T1, T2>	make_pair(const T1 &a, const T2 &b)
 
 } // ft
 
-#endif /* PAIR_HPP */
+#endif
