@@ -48,6 +48,10 @@ struct comp
 
 int main()
 {
+	// std::cout << (ft::is_same< std::size_t, ft::vector<int>::size_type >::value) << std::endl;
+	// std::cout << (ft::is_same< double, ft::vector<int>::size_type >::value) << std::endl;
+	std::vector<int>::iterator it;
+	
 	ft::vector<entity> a;
 	a.push_back(entity(2));
 	a.push_back(entity(-3));
