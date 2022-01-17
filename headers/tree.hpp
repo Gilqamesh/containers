@@ -89,10 +89,11 @@ private:
 	};
 
 public:
-	typedef typename node::key_type			key_type;
-	typedef typename node::value_type		value_type;
-	typedef typename node::compare_type		compare_type;
-	typedef typename node::allocator_type	allocator_type;
+	typedef typename node::key_type				key_type;
+	typedef typename node::value_type			value_type;
+	typedef typename node::compare_type			compare_type;
+	typedef typename node::allocator_type		allocator_type;
+	typedef typename allocator_type::pointer	pointer;
 
 	red_black_tree()
 		: root(NULL) { }
@@ -101,7 +102,8 @@ public:
 	node	*search(const key_type& key) { return (search(key, root)); }
 	void 	insert(const value_type& item)
 	{
-		node* z = new node(item);
+		pointer z = allocator.allocate(sizeof(node));
+		allocator.construct(z, item);
 		node* y = NULL;
 		node* x = root;
 		while (x != NULL)
@@ -121,7 +123,7 @@ public:
 			y->right_child = z;
 		insert_fixup(z);
 	}
-	void remove(const key_type& key)
+	void 	remove(const key_type& key)
 	{
 		node*	Node = search(key);
 		if (Node == NULL)
@@ -139,6 +141,7 @@ public:
 	void	print(void) const { print("", root, false); }
 
 private:
+	allocator_type	allocator;
 	node*	root;
 
 	node *search(const key_type& key, node *x)
@@ -385,7 +388,8 @@ private:
 				leaf->parent->right_child = NULL;
 		}
 		std::cout << "Removing " << leaf->getKey() << std::endl;
-		delete leaf;
+		allocator.destroy(leaf);
+		allocator.deallocate(leaf, sizeof(node));
 	}
 
 	// DEBUG
