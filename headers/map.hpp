@@ -4,10 +4,44 @@
 # include <memory>
 # include "functional.hpp"
 # include "utility.hpp"
-# include "tree.hpp"
 
 namespace ft
 {
+
+template <class base_node>
+class red_black_tree;
+
+template <class Key, class T, class Compare = ft::less<Key>, class Allocator = std::allocator<ft::pair<const Key, T> > >
+class map_node
+{
+public:
+	typedef Key									key_type;
+	typedef typename ft::pair<Key, T>			value_type;
+	typedef Compare								compare_type;
+	typedef Allocator							allocator_type;
+
+	map_node()
+		: data() { }
+	map_node(const map_node& other)
+		: data(other.data) { }
+	map_node(const value_type& item)
+		: data(item) { }
+	map_node& operator=(const map_node& other)
+	{
+		if (this != &other)
+		{
+			data = other.data;
+		}
+		return (*this);
+	}
+	~map_node() { }
+
+	inline const Key &getKey(void) const { return (data.first); }
+	void swap(map_node& n1, map_node& n2) { ft::swap(n1, n2); }
+
+private:
+	value_type	data;
+};
 
 template <class Key, class T, class Compare = ft::less<Key>, class Allocator = std::allocator<ft::pair<const Key, T> > >
 class map
@@ -15,7 +49,7 @@ class map
 public:
 	typedef Key									key_type;
 	typedef T									mapped_type;
-	typedef ft::pair<const Key, T>				value_type;
+	typedef ft::pair<Key, T>					value_type;
 	typedef typename std::size_t				size_type;
 	typedef typename std::ptrdiff_t				difference_type;
 	typedef Compare								key_compare;
@@ -37,7 +71,7 @@ public:
 		: tree() { } 
 
 private:
-	red_black_tree<Key, T, Compare, Allocator>	tree;
+	red_black_tree<map_node<Key, T, Compare, Allocator> >	tree;
 };
 
 } // ft

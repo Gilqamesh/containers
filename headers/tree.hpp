@@ -35,6 +35,7 @@
 # include "functional.hpp"
 # include "algorithm.hpp"
 # include "utility.hpp"
+# include "map.hpp"
 
 // DEBUG
 # include <string>
@@ -43,7 +44,7 @@
 namespace ft
 {
 
-template <typename Key, typename Value, class Compare = ft::less<Value>, class Allocator = ft::pair<const Key, Value> >
+template <class base_node>
 class red_black_tree
 {
 private:
@@ -52,24 +53,26 @@ private:
 		BLACK,
 		RED
 	};
-public:
-	template <typename K, typename V>
-	class node
+
+	class node : public base_node
 	{
-	friend class red_black_tree;
 	public:
+		typedef typename base_node::key_type		key_type;
+		typedef typename base_node::value_type		value_type;
+		typedef typename base_node::compare_type	compare_type;
+		typedef typename base_node::allocator_type	allocator_type;
+
 		node()
-			: key(), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
-		node(const K& k, const V& v)
-			: key(k), value(v), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
+			: base_node(), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
+		node(const value_type& item)
+			: base_node(item), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
 		node(const node& other)
-			: key(other.key), value(other.value), color(other.color), left_child(other.left_child), right_child(other.right_child), parent(other.parent) { }
-		node &operator=(const node& other)
+			: base_node(other), color(other.color), left_child(other.left_child), right_child(other.right_child), parent(other.parent) { }
+		node& operator=(const node& other)
 		{
 			if (this != &other)
 			{
-				key = other.key;
-				value = other.value;
+				base_node::operator=(other);
 				color = other.color;
 				left_child = other.left_child;
 				right_child = other.right_child;
@@ -79,29 +82,32 @@ public:
 		}
 		~node() { }
 
-	private:
-		K 			key;
-		V			value;
 		color_type	color;
-		node*		left_child;
-		node*		right_child;
-		node*		parent;
+		node		*left_child;
+		node		*right_child;
+		node		*parent;
 	};
+
+public:
+	typedef typename node::key_type			key_type;
+	typedef typename node::value_type		value_type;
+	typedef typename node::compare_type		compare_type;
+	typedef typename node::allocator_type	allocator_type;
 
 	red_black_tree()
 		: root(NULL) { }
 	~red_black_tree() { delete_from_node(root); }
 
-	node<Key, Value>	*search(const Key& key) { return (search(key, root)); }
-	void 				insert(const Key& key, const Value& value)
+	node	*search(const key_type& key) { return (search(key, root)); }
+	void 	insert(const value_type& item)
 	{
-		node<Key, Value>* z = new node<Key, Value>(key, value);
-		node<Key, Value>* y = NULL;
-		node<Key, Value>* x = root;
+		node* z = new node(item);
+		node* y = NULL;
+		node* x = root;
 		while (x != NULL)
 		{
 			y = x;
-			if (Compare()(z->key, x->key))
+			if (compare_type()(z->getKey(), x->getKey()))
 				x = x->left_child;
 			else
 				x = x->right_child;
@@ -109,15 +115,15 @@ public:
 		z->parent = y;
 		if (y == NULL)
 			root = z;
-		else if (z->key < y->key)
+		else if (z->getKey() < y->getKey())
 			y->left_child = z;
 		else
 			y->right_child = z;
 		insert_fixup(z);
 	}
-	void				remove(const Key& key)
+	void remove(const key_type& key)
 	{
-		node<Key, Value>*	Node = search(key);
+		node*	Node = search(key);
 		if (Node == NULL)
 			return ;
 		
@@ -133,26 +139,26 @@ public:
 	void	print(void) const { print("", root, false); }
 
 private:
-	node<Key, Value>*	root;
+	node*	root;
 
-	node<Key, Value> *search(const Key& key, node<Key, Value> *x)
+	node *search(const key_type& key, node *x)
 	{
 		if (x == NULL)
 			return (NULL);
-		if (key == x->key)
+		if (key == x->getKey())
 			return (x);
-		if (Compare()(key, x->key))
+		if (compare_type()(key, x->getKey()))
 			return (search(key, x->left_child));
 		else
 			return (search(key, x->right_child));
 	}
-	void insert_fixup(node<Key, Value>* z)
+	void insert_fixup(node* z)
 	{
 		while (z != root && z->parent->color == RED)
 		{
 			if (z->parent == z->parent->parent->left_child)
 			{
-				node<Key, Value>*	y = z->parent->parent->right_child; // z's uncle
+				node*	y = z->parent->parent->right_child; // z's uncle
 				if (y == NULL || y->color == BLACK)
 				{
 					if (z == z->parent->right_child) // triangle
@@ -174,7 +180,7 @@ private:
 			}
 			else
 			{
-				node<Key, Value>*	y = z->parent->parent->left_child;
+				node*	y = z->parent->parent->left_child;
 				if (y == NULL || y->color == BLACK)
 				{
 					if (z == z->parent->left_child)
@@ -197,9 +203,9 @@ private:
 		}
 		root->color = BLACK;
 	}
-	void left_rotate(node<Key, Value>* x)
+	void left_rotate(node* x)
 	{
-		node<Key, Value>*	y = x->right_child;
+		node*	y = x->right_child;
 		x->right_child = y->left_child;
 		if (y->left_child)
 			y->left_child->parent = x;
@@ -213,9 +219,9 @@ private:
 		y->left_child = x;
 		x->parent = y;
 	}
-	void right_rotate(node<Key, Value> *x)
+	void right_rotate(node *x)
 	{
-		node<Key, Value>*	y = x->left_child;
+		node*	y = x->left_child;
 		x->left_child = y->right_child;
 		if (y->right_child)
 			y->right_child->parent = x;
@@ -229,7 +235,7 @@ private:
 		y->right_child = x;
 		x->parent = y;
 	}
-	void delete_from_node(node<Key, Value>* x)
+	void delete_from_node(node* x)
 	{
 		if (x == NULL)
 			return ;
@@ -239,7 +245,7 @@ private:
 			delete_from_node(x->right_child);
 		delete x;
 	}
-	void delete_fixup(node<Key, Value>* x)
+	void delete_fixup(node* x)
 	{
 		if (x == NULL)
 			return ;
@@ -275,12 +281,12 @@ private:
 
 		x->color = BLACK;
 	}
-	node<Key, Value> *get_successor(node<Key, Value>* Node)
+	node *get_successor(node* Node)
 	{
 		if (Node->right_child)
 			return (find_left_most_leaf(Node->right_child));
 		
-		node<Key, Value>*	p = Node->parent;
+		node*	p = Node->parent;
 		while (p && Node == p->right_child)
 		{
 			Node = p;
@@ -288,12 +294,12 @@ private:
 		}
 		return (p);
 	}
-	node<Key, Value> *get_predecessor(node<Key, Value> *Node)
+	node *get_predecessor(node *Node)
 	{
 		if (Node->left_child)
 			return (find_right_most_leaf(Node->left_child));
 		
-		node<Key, Value>*	p = Node->parent;
+		node*	p = Node->parent;
 		while (p && Node == p->left_child)
 		{
 			Node = p;
@@ -301,19 +307,19 @@ private:
 		}
 		return (p);
 	}
-	node<Key, Value> *find_left_most_leaf(node<Key, Value>* Node)
+	node *find_left_most_leaf(node* Node)
 	{
 		while (Node->left_child)
 			Node = Node->left_child;
 		return (Node);
 	}
-	node<Key, Value> *find_right_most_leaf(node<Key, Value>* Node)
+	node *find_right_most_leaf(node* Node)
 	{
 		while (Node->right_child)
 			Node = Node->right_child;
 		return (Node);
 	}
-	node<Key, Value> *sibling(node<Key, Value>* Node)
+	node *sibling(node* Node)
 	{
 		if (Node->parent == NULL)
 			return (NULL);
@@ -321,7 +327,7 @@ private:
 			return (Node->parent->right_child);
 		return (Node->parent->left_child);
 	}
-	node<Key, Value> *niece(node<Key, Value>* Node)
+	node *niece(node* Node)
 	{
 		if (sibling(Node) == NULL)
 			return (NULL);
@@ -329,7 +335,7 @@ private:
 			return (sibling(Node)->left_child);
 		return (sibling(Node)->right_child);
 	}
-	node<Key, Value> *nephew(node<Key, Value>* Node)
+	node *nephew(node* Node)
 	{
 		if (sibling(Node) == NULL)
 			return (NULL);
@@ -337,14 +343,14 @@ private:
 			return (sibling(Node)->right_child);
 		return (sibling(Node)->left_child);
 	}
-	void	rotate_to_parent(node<Key, Value>* Node)
+	void	rotate_to_parent(node* Node)
 	{
 		if (Node == Node->parent->left_child)
 			right_rotate(Node->parent);
 		else
 			left_rotate(Node->parent);
 	}
-	node<Key, Value>	*has_one_child(node<Key, Value>* Node)
+	node	*has_one_child(node* Node)
 	{
 		if (Node->left_child && Node->right_child == NULL)
 			return (Node->left_child);
@@ -352,26 +358,24 @@ private:
 			return (Node->right_child);
 		return (NULL);
 	}
-	node<Key, Value>	*make_node_leaf(node<Key, Value>* Node)
+	node	*make_node_leaf(node* Node)
 	{
 		if (Node->left_child == NULL && Node->right_child == NULL)
 			return (Node);
 		if (has_one_child(Node))
 		{
-			ft::swap(Node->key, has_one_child(Node)->key);
-			ft::swap(Node->value, has_one_child(Node)->value);
+			Node->swap(*Node, *has_one_child(Node));
 			Node = has_one_child(Node);
 			return (make_node_leaf(Node));
 		}
 		else
 		{
-			ft::swap(Node->key, get_predecessor(Node)->key);
-			ft::swap(Node->value, get_predecessor(Node)->value);
+			Node->swap(*Node, *get_predecessor(Node));
 			Node = get_predecessor(Node);
 			return (make_node_leaf(Node));
 		}
 	}
-	void	prune_leaf(node<Key, Value>* leaf)
+	void	prune_leaf(node* leaf)
 	{
 		if (leaf->parent)
 		{
@@ -380,18 +384,18 @@ private:
 			else
 				leaf->parent->right_child = NULL;
 		}
-		std::cout << "Removing " << leaf->key << std::endl;
+		std::cout << "Removing " << leaf->getKey() << std::endl;
 		delete leaf;
 	}
 
 	// DEBUG
-	void	print(const std::string& prefix, node<Key, Value>* x, bool isLeft) const
+	void	print(const std::string& prefix, node* x, bool isLeft) const
 	{
 		if (x)
 		{
 			std::cout << prefix;
 			std::cout << (isLeft ? "├──" : "└──");
-			std::cout << x->key << (x->color == BLACK ? " black" : " red" ) << std::endl;
+			std::cout << x->getKey() << (x->color == BLACK ? " black" : " red" ) << std::endl;
 			print(prefix + (isLeft ? "│   " : "    "), x->left_child, true);
 			print(prefix + (isLeft ? "│   " : "    "), x->right_child, false);
 		}
