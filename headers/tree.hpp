@@ -35,7 +35,6 @@
 # include "functional.hpp"
 # include "algorithm.hpp"
 # include "utility.hpp"
-# include "map.hpp"
 
 // DEBUG
 # include <string>
@@ -60,7 +59,7 @@ private:
 		typedef typename base_node::key_type		key_type;
 		typedef typename base_node::value_type		value_type;
 		typedef typename base_node::compare_type	compare_type;
-		typedef typename base_node::allocator_type	allocator_type;
+		typedef typename base_node::allocator_type	base_allocator_type;
 
 		node()
 			: base_node(), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
@@ -92,8 +91,6 @@ public:
 	typedef typename node::key_type				key_type;
 	typedef typename node::value_type			value_type;
 	typedef typename node::compare_type			compare_type;
-	typedef typename node::allocator_type		allocator_type;
-	typedef typename allocator_type::pointer	pointer;
 
 	red_black_tree()
 		: root(NULL) { }
@@ -102,8 +99,7 @@ public:
 	node	*search(const key_type& key) { return (search(key, root)); }
 	void 	insert(const value_type& item)
 	{
-		pointer z = allocator.allocate(sizeof(node));
-		allocator.construct(z, item);
+		node *z = new node(item);
 		node* y = NULL;
 		node* x = root;
 		while (x != NULL)
@@ -141,8 +137,7 @@ public:
 	void	print(void) const { print("", root, false); }
 
 private:
-	allocator_type	allocator;
-	node*	root;
+	node	*root;
 
 	node *search(const key_type& key, node *x)
 	{
@@ -388,8 +383,7 @@ private:
 				leaf->parent->right_child = NULL;
 		}
 		std::cout << "Removing " << leaf->getKey() << std::endl;
-		allocator.destroy(leaf);
-		allocator.deallocate(leaf, sizeof(node));
+		delete leaf;
 	}
 
 	// DEBUG

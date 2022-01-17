@@ -11,14 +11,18 @@ namespace ft
 template <class base_node>
 class red_black_tree;
 
-template <class Key, class T, class Compare = ft::less<Key>, class Allocator = std::allocator<ft::pair<const Key, T> > >
+/*
+* each node in the red_black_tree is going to have this as a base type
+*/
+template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<Key, T> > >
 class map_node
 {
 public:
-	typedef Key									key_type;
-	typedef typename ft::pair<Key, T>			value_type;
-	typedef Compare								compare_type;
-	typedef Allocator							allocator_type;
+	typedef Key							key_type;
+	typedef T							mapped_type;
+	typedef typename ft::pair<Key, T>	value_type;
+	typedef Compare						compare_type;
+	typedef Allocator					allocator_type;
 
 	map_node()
 		: data() { }
@@ -40,16 +44,16 @@ public:
 	void swap(map_node& n1, map_node& n2) { ft::swap(n1, n2); }
 
 private:
-	value_type	data;
+	value_type		data;
 };
 
-template <class Key, class T, class Compare = ft::less<Key>, class Allocator = std::allocator<ft::pair<const Key, T> > >
+template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<const Key, T> > >
 class map
 {
 public:
 	typedef Key									key_type;
 	typedef T									mapped_type;
-	typedef ft::pair<Key, T>					value_type;
+	typedef typename ft::pair<Key, T>			value_type;
 	typedef typename std::size_t				size_type;
 	typedef typename std::ptrdiff_t				difference_type;
 	typedef Compare								key_compare;

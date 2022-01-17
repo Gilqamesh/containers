@@ -1,5 +1,6 @@
 # include <iostream>
 # include "tree.hpp"
+# include "map.hpp"
 # include <random>
 # include <functional>
 # include <string>
