@@ -46,6 +46,11 @@ namespace ft
 template <class base_node>
 class red_black_tree
 {
+public:
+	typedef typename base_node::key_type			key_type;
+	typedef typename base_node::value_type			value_type;
+	typedef typename base_node::compare_type		compare_type;
+
 private:
 	enum color_type
 	{
@@ -53,14 +58,12 @@ private:
 		RED
 	};
 
+	/*
+	* The inherit class needs to have swap() and getKey() methods and in addition some typedefs seen below
+	*/
 	class node : public base_node
 	{
 	public:
-		typedef typename base_node::key_type		key_type;
-		typedef typename base_node::value_type		value_type;
-		typedef typename base_node::compare_type	compare_type;
-		typedef typename base_node::allocator_type	base_allocator_type;
-
 		node()
 			: base_node(), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
 		node(const value_type& item)
@@ -88,20 +91,18 @@ private:
 	};
 
 public:
-	typedef typename node::key_type				key_type;
-	typedef typename node::value_type			value_type;
-	typedef typename node::compare_type			compare_type;
+	typedef node*	node_pointer;
 
 	red_black_tree()
 		: root(NULL) { }
 	~red_black_tree() { delete_from_node(root); }
 
-	node	*search(const key_type& key) { return (search(key, root)); }
+	node 	*search(const key_type& key) { return (search(key, root)); }
 	void 	insert(const value_type& item)
 	{
 		node *z = new node(item);
-		node* y = NULL;
-		node* x = root;
+		node *y = NULL;
+		node *x = root;
 		while (x != NULL)
 		{
 			y = x;
@@ -135,9 +136,6 @@ public:
 
 	// DEBUG
 	void	print(void) const { print("", root, false); }
-
-private:
-	node	*root;
 
 	node *search(const key_type& key, node *x)
 	{
@@ -281,6 +279,8 @@ private:
 	}
 	node *get_successor(node* Node)
 	{
+		if (Node == NULL)
+			return (NULL);
 		if (Node->right_child)
 			return (find_left_most_leaf(Node->right_child));
 		
@@ -294,6 +294,8 @@ private:
 	}
 	node *get_predecessor(node *Node)
 	{
+		if (Node == NULL)
+			return (NULL);
 		if (Node->left_child)
 			return (find_right_most_leaf(Node->left_child));
 		
@@ -398,6 +400,8 @@ private:
 			print(prefix + (isLeft ? "│   " : "    "), x->right_child, false);
 		}
 	}
+
+	node	*root;
 };
 
 } // ft

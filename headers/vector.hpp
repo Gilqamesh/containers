@@ -47,7 +47,6 @@ public:
 		}
 		return (*this);
 	}
-
 	vector_iterator& operator++(void)
 	{
 		++m_ptr;
