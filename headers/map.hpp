@@ -10,18 +10,15 @@
 namespace ft
 {
 
-/*
-* each node in the red_black_tree is going to have this as a base type
-*/
-template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<Key, T> > >
+template <class map>
 class map_node
 {
 public:
-	typedef Key										key_type;
-	typedef T										mapped_type;
-	typedef typename ft::pair<Key, T>				value_type;
-	typedef Compare									compare_type;
-	typedef Allocator								allocator_type;
+	typedef typename map::key_type					key_type;
+	typedef typename map::mapped_type				mapped_type;
+	typedef typename map::value_type				value_type;
+	typedef typename map::key_compare				key_compare;
+	typedef typename map::allocator_type			allocator_type;
 	typedef typename allocator_type::pointer		pointer;
 
 	map_node()
@@ -53,8 +50,9 @@ public:
 		allocator.deallocate(data, sizeof(value_type));
 	}
 
-	inline const Key &getKey(void) const { return (data->first); }
+	inline const key_type &getKey(void) const { return (data->first); }
 	void swap(map_node& n1, map_node& n2) { ft::swap(n1, n2); }
+	inline pointer getValue(void) { return (data); }
 
 private:
 	allocator_type	allocator;
@@ -64,59 +62,64 @@ private:
 template <typename map>
 class map_iterator
 {
+private:
+	typedef typename red_black_tree<map_node<map> >::node_pointer	node_pointer;
 public:
-	typedef typename map::pointer	pointer;
-	typedef typename map::reference	reference;
+	typedef typename map::value_type									value_type;
+	typedef typename map::reference										reference;
+	typedef typename map::pointer										pointer;
 
 	map_iterator()
-		: ptr(NULL) { }
+		: root(), ptr(NULL) { }
+	map_iterator(red_black_tree<map_node<map> >& tree)
+		: root(tree), ptr(NULL) { }
+	map_iterator(red_black_tree<map_node<map> >& tree, node_pointer a)
+		: root(tree), ptr(a) { }
 	map_iterator(const map_iterator& other)
-		: ptr(other.ptr) { }
-	map_iterator& operator=(const map_iterator& other)
+		: root(other.root), ptr(other.ptr) { }
+	map_iterator& operator=(const map_iterator &other)
 	{
 		if (this != &other)
 		{
+			root = other.root;
 			ptr = other.ptr;
 		}
 		return (*this);
 	}
 	~map_iterator() { }
 
-	reference operator*()
-	{
-		return (*ptr);
-	}
 	pointer operator->()
 	{
-		return (ptr);
+		return (ptr->getValue());
 	}
-	map_iterator &operator++()
+	map_iterator& operator++()
 	{
-		ptr = ptr->get_successor(ptr);
+		ptr = root.get_successor(ptr);
 		return (*this);
 	}
-	map_iterator &operator++(int)
+	map_iterator operator++(int)
 	{
-		map_iterator temp(*this);
-		ptr = ptr->get_successor(ptr);
-		return (temp);
+		map_iterator tmp(*this);
+		ptr = root.get_successor(ptr);
+		return (tmp);
 	}
-	map_iterator &operator--()
+	map_iterator& operator--()
 	{
-		ptr = ptr->get_predecessor(ptr);
+		ptr = root.get_predecessor(ptr);
 		return (*this);
 	}
-	map_iterator &operator--(int)
+	map_iterator operator--(int)
 	{
-		map_iterator temp(*this);
-		ptr = ptr->get_predecessor(ptr);
-		return (temp);
+		map_iterator tmp(*this);
+		ptr = root.get_predecessor(ptr);
+		return (tmp);
 	}
-	bool operator==(const map_iterator& other) const { return (ptr == other.ptr);  }
-	bool operator!=(const map_iterator& other) const { return (!(*this == other)); }
-	
+	bool operator==(const map_iterator& other) const { return (ptr == other.ptr); }
+	bool operator!=(const map_iterator&other) const  { return (!(ptr == other.ptr)); }
+
 private:
-	pointer	ptr;
+	red_black_tree<map_node<map> >	&root;
+	node_pointer					ptr;
 };
 
 template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<const Key, T> > >
@@ -125,28 +128,28 @@ class map
 public:
 	typedef Key																key_type;
 	typedef T																mapped_type;
-	typedef typename ft::pair<Key, T>										value_type;
+	typedef typename ft::pair<const Key, T>									value_type;
 	typedef typename std::size_t											size_type;
 	typedef typename std::ptrdiff_t											difference_type;
 	typedef Compare															key_compare;
 	typedef Allocator														allocator_type;
-	typedef red_black_tree<map_node<Key, T, Compare, Allocator> >&			reference;
-	typedef red_black_tree<map_node<Key, T, Compare, Allocator> >*			pointer;
+	typedef value_type&														reference;
 	typedef map_iterator<map>												iterator;
+	typedef value_type*														pointer;
 	// NEED REVERSE_ITERATOR
 	// NEED CONST_REVERSE_ITERATOR
 
 	map()
-		: root(new iterator()) { }
+		: root(), it(root) { }
 	explicit map(const Compare& comp, const Allocator& alloc = Allocator())
-		: root(new iterator()) { }
-	~map() { delete root; }
+		: root(), it(root) { }
+	~map() { }
 
-	iterator	begin(void) { return (root->find_left_most_leaf(root));  }
-	iterator	end(void)	{ return (root->find_right_most_leaf(root)); }
-
+	iterator begin(void) { return (iterator(root, root.find_left_most_leaf(root.root)));  }
+	iterator end(void)	 { return (iterator(root, root.find_right_most_leaf(root.root))); }
 private:
-	iterator	root;
+	red_black_tree<map_node<map> >	root;
+	iterator						it;
 };
 
 } // ft

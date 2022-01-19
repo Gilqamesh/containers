@@ -5,7 +5,6 @@
 int main()
 {
 	ft::map<int, int>	a;
-	std::cout << a.begin() << std::endl;
 
 	// ft::red_black_tree<ft::map_node<int, int> >	t;
 
@@ -13,8 +12,10 @@ int main()
 	// 	t.insert(ft::pair<int, int>(i, i * 2));
 	// t.print();
 
-	// for (ft::red_black_tree<ft::map_node<int, int> >::iterator i = t.begin(); i != t.end(); ++i)
-		// ;
+	for (ft::map<int, int>::iterator i = a.begin(); i != a.end(); ++i)
+	{
+		std::cout << i->first << std::endl;
+	}
 	// std::cout << "\n\n\n\n";
 	// t.remove(2);
 	// t.remove(4);

@@ -1,42 +1,9 @@
 #ifndef TREE_HPP
 # define TREE_HPP
 
-// smaller nodes to the left, larger nodes to the right
-
-// 1. A node is either red or black.
-// 2. The root and leaves (NIL) are black.
-// 3. If a node is red, then its children are black.
-// 4. All paths from a node to its NIL descendants contain the same number of black nodes.
-
-// Rotation:
-// insert and remove may violate the above rules, so we use rotation to:
-// 1. alter the structure of the tree by rearranging subtrees.
-// 2. goal is to decrease the height of the tree.
-//		- red-black trees: maximum height of O(log n)
-//		- larger subtrees up, smaller subtrees down
-// 3. does not affect the order of elements.
-// Left rotate:
-// 1. Root's right child becomes root and old root as it's left child
-// 2. New root's old left child becomes old root's right child
-// Right rotate:
-// 1. Root's left child becomes root and old root as it's right child
-// 2. New root's old right child becomes old root's left child
-// note: The property of a binary search tree is still preserved after rotaton
-
-// Insertion strategy:
-// 1. Insert Z and color it red
-// 2. Recolor and rotate nodes to fix violation
-// Violation happens when we have either of the 4 cases:
-// 0. Z is root -> color Z black
-// 1. Z.uncle is red -> recolor Z's parent, grandparent and uncle
-// 2. Z.uncle is black (triangle) -> rotate Z.parent in the opposite direction of Z
-// 3. Z.uncle is black (line) -> rotate Z.grandparent in the opposite direction of Z and color Z's original parent and grandparent
-
 # include "functional.hpp"
 # include "algorithm.hpp"
 # include "utility.hpp"
-
-// DEBUG
 # include <string>
 # include <iostream>
 
@@ -49,7 +16,7 @@ class red_black_tree
 public:
 	typedef typename base_node::key_type			key_type;
 	typedef typename base_node::value_type			value_type;
-	typedef typename base_node::compare_type		compare_type;
+	typedef typename base_node::key_compare			key_compare;
 
 private:
 	enum color_type
@@ -59,7 +26,7 @@ private:
 	};
 
 	/*
-	* The inherit class needs to have swap() and getKey() methods and in addition some typedefs seen below
+	* The inherit class needs to have swap() and getKey() methods
 	*/
 	class node : public base_node
 	{
@@ -92,6 +59,7 @@ private:
 
 public:
 	typedef node*	node_pointer;
+	node			*root;
 
 	red_black_tree()
 		: root(NULL) { }
@@ -106,7 +74,7 @@ public:
 		while (x != NULL)
 		{
 			y = x;
-			if (compare_type()(z->getKey(), x->getKey()))
+			if (key_compare()(z->getKey(), x->getKey()))
 				x = x->left_child;
 			else
 				x = x->right_child;
@@ -143,7 +111,7 @@ public:
 			return (NULL);
 		if (key == x->getKey())
 			return (x);
-		if (compare_type()(key, x->getKey()))
+		if (key_compare()(key, x->getKey()))
 			return (search(key, x->left_child));
 		else
 			return (search(key, x->right_child));
@@ -400,8 +368,6 @@ public:
 			print(prefix + (isLeft ? "│   " : "    "), x->right_child, false);
 		}
 	}
-
-	node	*root;
 };
 
 } // ft
