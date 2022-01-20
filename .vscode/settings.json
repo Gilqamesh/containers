@@ -74,6 +74,7 @@
 		"csignal": "cpp",
 		"list": "cpp",
 		"set": "cpp",
-		"iomanip": "cpp"
+		"iomanip": "cpp",
+		"__undef_macros": "cpp"
 	}
 }
