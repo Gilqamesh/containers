@@ -11,12 +11,120 @@ namespace ft
 {
 
 template <class tree>
-class tree_iterator
+class tree_iterator;
+
+template <class tree>
+class tree_const_iterator
 {
 public:
 	typedef typename tree::node_pointer			node_pointer;
-	typedef typename tree::value_pointer		value_pointer;
-	typedef typename tree::value_reference		value_reference;
+	typedef typename tree::const_pointer		const_pointer;
+	typedef typename tree::const_reference		const_reference;
+
+	tree_const_iterator()
+		: ptr(NULL), start_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
+	tree_const_iterator(node_pointer p, node_pointer start, node_pointer end, node_pointer end_leaf_node)
+		: ptr(p), start_node(start), end_node(end), end_leaf_node(end_leaf_node) { }
+	tree_const_iterator(const tree_const_iterator& other)
+		: ptr(other.ptr), start_node(other.start_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+	tree_const_iterator(const tree_iterator<tree>& other)
+		: ptr(other.ptr), start_node(other.start_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+	tree_const_iterator& operator=(const tree_const_iterator& other)
+	{
+		if (this != &other)
+		{
+			ptr = other.ptr;
+			start_node = other.start_node;
+			end_node = other.end_node;
+			end_leaf_node = other.end_leaf_node;
+		}
+		return (*this);
+	}
+	~tree_const_iterator() { }
+
+	const_pointer operator->()
+	{
+		if (ptr == NULL)
+			return (end_node->base.data);
+		return (ptr->base.data);
+	}
+	const_reference operator*()
+	{
+		if (ptr == NULL)
+			return (*end_node->base.data);
+		return (*ptr->base.data);
+	}
+	tree_const_iterator &operator++()
+	{
+		ptr = get_successor(ptr);
+		if (ptr == NULL)
+			ptr = end_node;
+		return (*this);
+	}
+	tree_const_iterator operator++(int)
+	{
+		tree_const_iterator tmp(*this);
+		ptr = get_successor(ptr);
+		if (ptr == NULL)
+			ptr = end_node;
+		return (tmp);
+	}
+	tree_const_iterator &operator--()
+	{
+		if (ptr == end_node)
+			ptr = end_leaf_node;
+		else
+			ptr = get_predecessor(ptr);
+		if (ptr == NULL)
+			ptr = start_node;
+		return (*this);
+	}
+	tree_const_iterator operator--(int)
+	{
+		tree_const_iterator tmp(*this);
+		if (ptr == end_node)
+			ptr = end_leaf_node;
+		else
+			ptr = get_predecessor(ptr);
+		if (ptr == NULL)
+			ptr = start_node;
+		return (tmp);
+	}
+	bool operator==(const tree_const_iterator &other) const
+	{
+		return (ptr == other.ptr);
+		if (ptr == end_node)
+		{
+			if (other.ptr == other.end_node)
+				return (ptr == other.ptr);
+			return (false);
+		}
+		else
+		{
+			if (other.ptr == other.end_node)
+				return (false);
+			return (ptr == other.ptr);
+		}
+	}
+	bool operator!=(const tree_const_iterator &other) const
+	{
+		return (!(*this == other));
+	}
+private:
+	node_pointer ptr;
+	node_pointer start_node;
+	node_pointer end_node;
+	node_pointer end_leaf_node;
+};
+
+template <class tree>
+class tree_iterator
+{
+friend class tree_const_iterator<tree>;
+public:
+	typedef typename tree::node_pointer			node_pointer;
+	typedef typename tree::pointer				pointer;
+	typedef typename tree::reference			reference;
 
 	tree_iterator()
 		: ptr(NULL), start_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
@@ -37,17 +145,17 @@ public:
 	}
 	~tree_iterator() { }
 
-	value_pointer 	operator->()
+	pointer operator->()
 	{
 		if (ptr == NULL)
 			return (end_node->base.data);
 		return (ptr->base.data);
 	}
-	value_reference operator*()
+	reference operator*()
 	{
 		if (ptr == NULL)
-			return (end_node->base.data);
-		return (ptr->base.data);
+			return (*end_node->base.data);
+		return (*ptr->base.data);
 	}
 	tree_iterator &operator++()
 	{
@@ -112,14 +220,121 @@ private:
 	node_pointer end_leaf_node;
 };
 
+template <class tree>
+class tree_reverse_iterator;
+
+template <class tree>
+class tree_const_reverse_iterator
+{
+public:
+	typedef typename tree::node_pointer			node_pointer;
+	typedef typename tree::const_pointer		const_pointer;
+	typedef typename tree::const_reference		const_reference;
+
+	tree_const_reverse_iterator()
+		: ptr(NULL), start_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
+	tree_const_reverse_iterator(node_pointer p, node_pointer start, node_pointer end, node_pointer end_leaf_node)
+		: ptr(p), start_node(start), end_node(end), end_leaf_node(end_leaf_node) { }
+	tree_const_reverse_iterator(const tree_const_reverse_iterator& other)
+		: ptr(other.ptr), start_node(other.start_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+	tree_const_reverse_iterator(const tree_reverse_iterator<tree>& other)
+		: ptr(other.ptr), start_node(other.start_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+	tree_const_reverse_iterator& operator=(const tree_const_reverse_iterator& other)
+	{
+		if (this != &other)
+		{
+			ptr = other.ptr;
+			start_node = other.start_node;
+			end_node = other.end_node;
+			end_leaf_node = other.end_leaf_node;
+		}
+		return (*this);
+	}
+	~tree_const_reverse_iterator() { }
+
+	const_pointer	operator->()
+	{
+		if (ptr == NULL)
+			return (end_node->base.data);
+		return (ptr->base.data);
+	}
+	const_reference operator*()
+	{
+		if (ptr == NULL)
+			return (*end_node->base.data);
+		return (*ptr->base.data);
+	}
+	tree_const_reverse_iterator &operator++()
+	{
+		ptr = get_predecessor(ptr);
+		if (ptr == NULL)
+			ptr = end_node;
+		return (*this);
+	}
+	tree_const_reverse_iterator operator++(int)
+	{
+		tree_const_reverse_iterator tmp(*this);
+		ptr = get_predecessor(ptr);
+		if (ptr == NULL)
+			ptr = end_node;
+		return (tmp);
+	}
+	tree_const_reverse_iterator &operator--()
+	{
+		if (ptr == end_node)
+			ptr = end_leaf_node;
+		else
+			ptr = get_successor(ptr);
+		if (ptr == NULL)
+			ptr = start_node;
+		return (*this);
+	}
+	tree_const_reverse_iterator operator--(int)
+	{
+		tree_const_reverse_iterator tmp(*this);
+		if (ptr == end_node)
+			ptr = end_leaf_node;
+		else
+			ptr = get_successor(ptr);
+		if (ptr == NULL)
+			ptr = start_node;
+		return (tmp);
+	}
+	bool operator==(const tree_const_reverse_iterator &other) const
+	{
+		return (ptr == other.ptr);
+		if (ptr == end_node)
+		{
+			if (other.ptr == other.end_node)
+				return (ptr == other.ptr);
+			return (false);
+		}
+		else
+		{
+			if (other.ptr == other.end_node)
+				return (false);
+			return (ptr == other.ptr);
+		}
+	}
+	bool operator!=(const tree_const_reverse_iterator &other) const
+	{
+		return (!(*this == other));
+	}
+private:
+	node_pointer ptr;
+	node_pointer start_node;
+	node_pointer end_node;
+	node_pointer end_leaf_node;
+};
 
 template <class tree>
 class tree_reverse_iterator
 {
+friend class tree_const_reverse_iterator<tree>;
 public:
 	typedef typename tree::node_pointer			node_pointer;
-	typedef typename tree::value_pointer		value_pointer;
-	typedef typename tree::value_reference		value_reference;
+	typedef typename tree::pointer				pointer;
+	typedef typename tree::reference			reference;
 
 	tree_reverse_iterator()
 		: ptr(NULL), start_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
@@ -140,17 +355,17 @@ public:
 	}
 	~tree_reverse_iterator() { }
 
-	value_pointer 	operator->()
+	pointer	operator->()
 	{
 		if (ptr == NULL)
 			return (end_node->base.data);
 		return (ptr->base.data);
 	}
-	value_reference operator*()
+	reference operator*()
 	{
 		if (ptr == NULL)
-			return (end_node->base.data);
-		return (ptr->base.data);
+			return (*end_node->base.data);
+		return (*ptr->base.data);
 	}
 	tree_reverse_iterator &operator++()
 	{
@@ -224,13 +439,12 @@ enum color_type
 /*
 * The inherit class needs to have swap() and getKey() methods
 */
-template <class map_node>
+template <class node_type>
 class node
 {
 public:
-	typedef typename map_node::key_type			key_type;
-	typedef typename map_node::value_type		value_type;
-	typedef typename map_node::key_compare		key_compare;
+	typedef typename node_type::key_type		key_type;
+	typedef typename node_type::value_type		value_type;
 
 	node()
 		: base(), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
@@ -252,33 +466,44 @@ public:
 	}
 	~node() { }
 
-	map_node	base;
+	node_type	base;
 	color_type	color;
 	node		*left_child;
 	node		*right_child;
 	node		*parent;
 };
 
-template <class map_node>
+template <class NodeContainer>
 class red_black_tree
 {
 public:
-	typedef typename map_node::key_type				key_type;
-	typedef typename map_node::value_type			value_type;
-	typedef typename map_node::key_compare			key_compare;
-	typedef typename map_node::pointer				pointer;
-	typedef node<map_node>*							node_pointer;
-	typedef tree_iterator<red_black_tree> 			iterator;
-	typedef tree_reverse_iterator<red_black_tree>	reverse_iterator;
-	typedef value_type&								value_reference;
-	typedef value_type*								value_pointer;
+	typedef typename NodeContainer::key_type							key_type;
+	typedef typename NodeContainer::mapped_type							mapped_type;
+	typedef typename NodeContainer::value_type							value_type;
+	typedef typename NodeContainer::key_compare							key_compare;
+	typedef typename NodeContainer::reference							reference;
+	typedef typename NodeContainer::const_reference						const_reference;
+	typedef typename NodeContainer::pointer								pointer;
+	typedef typename NodeContainer::const_pointer						const_pointer;
+	typedef typename NodeContainer::base_node_type						base_node_type;
+
+	typedef node<base_node_type>										node_type;
+	typedef node<base_node_type>*										node_pointer;
+	typedef const node<base_node_type>*									node_const_pointer;
+	typedef node<base_node_type>&										node_reference;
+	typedef const node<base_node_type>&									node_const_reference;
+
+	typedef tree_iterator<red_black_tree> 								iterator;
+	typedef tree_const_iterator<red_black_tree>							const_iterator;
+	typedef tree_reverse_iterator<red_black_tree>						reverse_iterator;
+	typedef tree_const_reverse_iterator<red_black_tree>					const_reverse_iterator;
 
 	node_pointer	root;
 	node_pointer	begin_node;
 	node_pointer	end_node;
 
 	red_black_tree()
-		: root(NULL), begin_node(new node<map_node>()), end_node(new node<map_node>()) { }
+		: root(NULL), begin_node(new node_type()), end_node(new node_type()) { }
 	~red_black_tree() { delete_from_node(root); delete begin_node; delete end_node; }
 
 	iterator begin() { return (iterator(find_left_most_leaf(root), begin_node, end_node, find_right_most_leaf(root))); }
@@ -289,13 +514,14 @@ public:
 	node_pointer search(const key_type& key) { return (search(key, root)); }
 	void 	insert(const value_type& item)
 	{
-		node_pointer z = new node<map_node>(item);
+
+		node_pointer z = new node_type(item);
 		node_pointer y = NULL;
 		node_pointer x = root;
 		while (x != NULL)
 		{
 			y = x;
-			if (key_compare()(z->base.getKey(), x->base.getKey()))
+			if (NodeContainer::compare(z->base.getKey(), x->base.getKey()))
 				x = x->left_child;
 			else
 				x = x->right_child;
@@ -303,7 +529,7 @@ public:
 		z->parent = y;
 		if (y == NULL)
 			root = z;
-		else if (z->base.getKey() < y->base.getKey())
+		else if (NodeContainer::compare(z->base.getKey(), y->base.getKey()))
 			y->left_child = z;
 		else
 			y->right_child = z;
@@ -342,8 +568,18 @@ private:
 	}
 };
 
-template <class map_node, typename key_type, class key_compare>
-node<map_node> *search(const key_type& key, node<map_node> *x)
+template <class node_pointer>
+node_pointer getRoot(node_pointer a)
+{
+	if (a == NULL)
+		return (NULL);
+	while (a->parent)
+		a = a->parent;
+	return (a);
+}
+
+template <class node_pointer, typename key_type, class key_compare>
+node_pointer search(const key_type& key, node_pointer x)
 {
 	if (x == NULL)
 		return (NULL);
@@ -355,8 +591,8 @@ node<map_node> *search(const key_type& key, node<map_node> *x)
 		return (search(key, x->right_child));
 }
 
-template <class map_node>
-void insert_fixup(node<map_node>* z, node<map_node>** root)
+template <class node_pointer>
+void insert_fixup(node_pointer z, node_pointer *root)
 {
 	if (z == NULL)
 		return ;
@@ -364,7 +600,7 @@ void insert_fixup(node<map_node>* z, node<map_node>** root)
 	{
 		if (z->parent == z->parent->parent->left_child)
 		{
-			node<map_node>*	y = z->parent->parent->right_child; // z's uncle
+			node_pointer y = z->parent->parent->right_child; // z's uncle
 			if (y == NULL || y->color == BLACK)
 			{
 				if (z == z->parent->right_child) // triangle
@@ -386,7 +622,7 @@ void insert_fixup(node<map_node>* z, node<map_node>** root)
 		}
 		else
 		{
-			node<map_node>*	y = z->parent->parent->left_child;
+			node_pointer y = z->parent->parent->left_child;
 			if (y == NULL || y->color == BLACK)
 			{
 				if (z == z->parent->left_child)
@@ -410,12 +646,12 @@ void insert_fixup(node<map_node>* z, node<map_node>** root)
 	(*root)->color = BLACK;
 }
 
-template <class map_node>
-void left_rotate(node<map_node>* x, node<map_node> **root)
+template <class node_pointer>
+void left_rotate(node_pointer x, node_pointer *root)
 {
 	if (x == NULL)
 		return ;
-	node<map_node>*	y = x->right_child;
+	node_pointer y = x->right_child;
 	x->right_child = y->left_child;
 	if (y->left_child)
 		y->left_child->parent = x;
@@ -430,12 +666,12 @@ void left_rotate(node<map_node>* x, node<map_node> **root)
 	x->parent = y;
 }
 
-template <class map_node>
-void right_rotate(node<map_node> *x, node<map_node> **root)
+template <class node_pointer>
+void right_rotate(node_pointer x, node_pointer *root)
 {
 	if (x == NULL)
 		return ;
-	node<map_node>*	y = x->left_child;
+	node_pointer y = x->left_child;
 	x->left_child = y->right_child;
 	if (y->right_child)
 		y->right_child->parent = x;
@@ -450,8 +686,8 @@ void right_rotate(node<map_node> *x, node<map_node> **root)
 	x->parent = y;
 }
 
-template <class map_node>
-void delete_from_node(node<map_node>* x)
+template <class node_pointer>
+void delete_from_node(node_pointer x)
 {
 	if (x == NULL)
 		return ;
@@ -462,8 +698,8 @@ void delete_from_node(node<map_node>* x)
 	delete x;
 }
 
-template <class map_node>
-void delete_fixup(node<map_node>* x, node<map_node> **root)
+template <class node_pointer>
+void delete_fixup(node_pointer x, node_pointer *root)
 {
 	if (x == NULL)
 		return ;
@@ -500,15 +736,15 @@ void delete_fixup(node<map_node>* x, node<map_node> **root)
 	x->color = BLACK;
 }
 
-template <class map_node>
-node<map_node> *get_successor(node<map_node>* Node)
+template <class node_pointer>
+node_pointer get_successor(node_pointer Node)
 {
 	if (Node == NULL)
 		return (NULL);
 	if (Node->right_child)
 		return (find_left_most_leaf(Node->right_child));
 	
-	node<map_node>*	p = Node->parent;
+	node_pointer p = Node->parent;
 	while (p && Node == p->right_child)
 	{
 		Node = p;
@@ -517,15 +753,15 @@ node<map_node> *get_successor(node<map_node>* Node)
 	return (p);
 }
 
-template <class map_node>
-node<map_node> *get_predecessor(node<map_node> *Node)
+template <class node_pointer>
+node_pointer get_predecessor(node_pointer Node)
 {
 	if (Node == NULL)
 		return (NULL);
 	if (Node->left_child)
 		return (find_right_most_leaf(Node->left_child));
 	
-	node<map_node>*	p = Node->parent;
+	node_pointer p = Node->parent;
 	while (p && Node == p->left_child)
 	{
 		Node = p;
@@ -534,8 +770,8 @@ node<map_node> *get_predecessor(node<map_node> *Node)
 	return (p);
 }
 
-template <class map_node>
-node<map_node> *find_left_most_leaf(node<map_node>* Node)
+template <class node_pointer>
+node_pointer find_left_most_leaf(node_pointer Node)
 {
 	if (Node == NULL)
 		return (NULL);
@@ -544,8 +780,8 @@ node<map_node> *find_left_most_leaf(node<map_node>* Node)
 	return (Node);
 }
 
-template <class map_node>
-node<map_node> *find_right_most_leaf(node<map_node>* Node)
+template <class node_pointer>
+node_pointer find_right_most_leaf(node_pointer Node)
 {
 	if (Node == NULL)
 		return (NULL);
@@ -554,8 +790,8 @@ node<map_node> *find_right_most_leaf(node<map_node>* Node)
 	return (Node);
 }
 
-template <class map_node>
-node<map_node> *sibling(node<map_node>* Node)
+template <class node_pointer>
+node_pointer sibling(node_pointer Node)
 {
 	if (Node == NULL || Node->parent == NULL)
 		return (NULL);
@@ -564,8 +800,8 @@ node<map_node> *sibling(node<map_node>* Node)
 	return (Node->parent->left_child);
 }
 
-template <class map_node>
-node<map_node> *niece(node<map_node>* Node)
+template <class node_pointer>
+node_pointer niece(node_pointer Node)
 {
 	if (sibling(Node) == NULL)
 		return (NULL);
@@ -574,8 +810,8 @@ node<map_node> *niece(node<map_node>* Node)
 	return (sibling(Node)->right_child);
 }
 
-template <class map_node>
-node<map_node> *nephew(node<map_node>* Node)
+template <class node_pointer>
+node_pointer nephew(node_pointer Node)
 {
 	if (sibling(Node) == NULL)
 		return (NULL);
@@ -584,8 +820,8 @@ node<map_node> *nephew(node<map_node>* Node)
 	return (sibling(Node)->left_child);
 }
 
-template <class map_node>
-void	rotate_to_parent(node<map_node>* Node, node<map_node>** root)
+template <class node_pointer>
+void	rotate_to_parent(node_pointer Node, node_pointer *root)
 {
 	if (Node == NULL)
 		return ;
@@ -595,8 +831,8 @@ void	rotate_to_parent(node<map_node>* Node, node<map_node>** root)
 		left_rotate(Node->parent, root);
 }
 
-template <class map_node>
-node<map_node>	*has_one_child(node<map_node>* Node)
+template <class node_pointer>
+node_pointer has_one_child(node_pointer Node)
 {
 	if (Node == NULL)
 		return (NULL);
@@ -607,8 +843,8 @@ node<map_node>	*has_one_child(node<map_node>* Node)
 	return (NULL);
 }
 
-template <class map_node>
-node<map_node>	*make_node_leaf(node<map_node>* Node)
+template <class node_pointer>
+node_pointer make_node_leaf(node_pointer Node)
 {
 	if (Node == NULL)
 		return (NULL);
@@ -628,8 +864,8 @@ node<map_node>	*make_node_leaf(node<map_node>* Node)
 	}
 }
 
-template <class map_node>
-void	prune_leaf(node<map_node>* leaf)
+template <class node_pointer>
+void	prune_leaf(node_pointer leaf)
 {
 	if (leaf == NULL)
 		return ;

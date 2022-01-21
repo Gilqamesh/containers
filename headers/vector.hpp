@@ -10,28 +10,18 @@
 
 namespace ft
 {
-/*
-template <typename Category, typename T, typename Distance = std::ptrdiff_t,
-		  typename Pointer = T*, typename Reference = T&>
-struct iterator
-{
-	typedef Distance	difference_type;
-	typedef T			value_type;
-	typedef Pointer		pointer;
-	typedef Reference	reference;
-	typedef Category	iterator_category;
-};
-*/
 
 template <typename vector>
 class vector_iterator
 {
 public:
-	typedef typename std::ptrdiff_t			difference_type;
-	typedef typename vector::value_type		value_type;
-	typedef typename vector::pointer		pointer;
-	typedef typename vector::reference		reference;
-	typedef random_access_iterator_tag		iterator_category;
+	typedef typename std::ptrdiff_t				difference_type;
+	typedef typename vector::value_type			value_type;
+	typedef typename vector::pointer			pointer;
+	typedef typename vector::const_pointer		const_pointer;
+	typedef typename vector::reference			reference;
+	typedef typename vector::const_reference	const_reference;
+	typedef random_access_iterator_tag			iterator_category;
 
 	vector_iterator()
 		: m_ptr(NULL) { }
@@ -46,6 +36,10 @@ public:
 			m_ptr = other.m_ptr;
 		}
 		return (*this);
+	}
+	difference_type operator-(const vector_iterator& other) const
+	{
+		return (other.m_ptr - m_ptr);
 	}
 	vector_iterator& operator++(void)
 	{
@@ -73,11 +67,23 @@ public:
 	{
 		return *(m_ptr + index);
 	}
+	const_reference operator[](difference_type index) const
+	{
+		return *(m_ptr + index);
+	}
 	pointer	operator->()
 	{
 		return (m_ptr);
 	}
+	const_pointer operator->() const
+	{
+		return (m_ptr);
+	}
 	reference operator*()
+	{
+		return *(m_ptr);
+	}
+	const_reference operator*() const
 	{
 		return *(m_ptr);
 	}
@@ -101,35 +107,131 @@ private:
 
 template <typename vector>
 typename vector_iterator<vector>::difference_type
-operator-(const vector_iterator<vector>& it1, const vector_iterator<vector>& it2)
+operator-(vector_iterator<vector>& it1, vector_iterator<vector>& it2)
 {
-	return (it1.m_ptr - it2.m_ptr);
+	return (it1.operator->() - it2.operator->());
 }
 
 template <typename vector, typename T>
 vector_iterator<vector>
-operator+(const vector_iterator<vector>& it, T a)
+operator+(vector_iterator<vector>& it, T a)
 {
-	return (it.m_ptr + a);
+	return (it.operator->() + a);
 }
 
+template <typename vector>
+class vector_const_iterator
+{
+public:
+	typedef typename vector::difference_type	difference_type;
+	typedef typename vector::value_type			value_type;
+	typedef typename vector::pointer			pointer;
+	typedef typename vector::const_pointer		const_pointer;
+	typedef typename vector::const_reference	const_reference;
+	typedef random_access_iterator_tag			iterator_category;
+
+	vector_const_iterator()
+		: m_ptr(NULL) { }
+	vector_const_iterator(pointer ptr)
+		: m_ptr(ptr) { }
+	vector_const_iterator(const vector_iterator<vector>& other)
+		: m_ptr(other.operator->()) { }
+	vector_const_iterator(const vector_const_iterator& other)
+		: m_ptr(other.m_ptr) { }
+	vector_const_iterator& operator=(const vector_const_iterator& other)
+	{
+		if (this != &other)
+		{
+			m_ptr = other.m_ptr;
+		}
+		return (*this);
+	}
+	difference_type operator-(const vector_const_iterator& other) const
+	{
+		return (other.m_ptr - m_ptr);
+	}
+	vector_const_iterator& operator++(void)
+	{
+		++m_ptr;
+		return (*this);
+	}
+	vector_const_iterator operator++(int)
+	{
+		vector_const_iterator temp(*this);
+		++m_ptr;
+		return (temp);
+	}
+	vector_const_iterator& operator--(void)
+	{
+		--m_ptr;
+		return (*this);
+	}
+	vector_const_iterator operator--(int)
+	{
+		vector_const_iterator temp(*this);
+		--m_ptr;
+		return (temp);
+	}
+	const_reference operator[](difference_type index) const
+	{
+		return *(m_ptr + index);
+	}
+	const_pointer operator->() const
+	{
+		return (m_ptr);
+	}
+	const_reference operator*() const
+	{
+		return *(m_ptr);
+	}
+	bool operator==(const vector_const_iterator& other) const
+	{
+		return (m_ptr == other.m_ptr);
+	}
+	bool operator!=(const vector_const_iterator& other) const
+	{
+		return (!(*this == other));
+	}
+	vector_const_iterator &operator-=(const vector_const_iterator& other)
+	{
+		m_ptr = m_ptr - other.m_ptr;
+		return (*this);
+	}
+
+private:
+	pointer	m_ptr;
+};
+
+template <typename vector>
+typename vector_const_iterator<vector>::difference_type
+operator-(vector_const_iterator<vector>& it1, vector_const_iterator<vector>& it2)
+{
+	return (it1.operator->() - it2.operator->());
+}
+
+template <typename vector, typename T>
+vector_const_iterator<vector>
+operator+(vector_const_iterator<vector>& it, T a)
+{
+	return (it.operator->() + a);
+}
 
 template <typename T, typename Allocator = std::allocator<T> >
 class vector
 {
 public:
-	typedef typename std::size_t								size_type;
 	typedef T													value_type;
-	typedef T*													pointer;
-	typedef const T*											const_pointer;
+	typedef Allocator											allocator_type;
+	typedef typename std::size_t								size_type;
+	typedef typename std::ptrdiff_t								difference_type;
+	typedef value_type&											reference;
+	typedef const value_type&									const_reference;
+	typedef value_type*											pointer;
+	typedef const value_type*									const_pointer;
 	typedef vector_iterator<vector>								iterator;
-	// typedef typename Allocator::pointer							iterator; // need to be implemented on some iterator
-	typedef typename Allocator::const_pointer					const_iterator; // need to be implemented on some iterator
+	typedef vector_const_iterator<vector>						const_iterator;
 	typedef typename ft::reverse_iterator<iterator>				reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>		const_reverse_iterator;
-	typedef typename Allocator::reference						reference;
-	typedef typename Allocator::const_reference					const_reference;
-	typedef Allocator											allocator_type;
 	
 	vector() // tested
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator() { }
@@ -142,7 +244,7 @@ public:
 		finish = start + count;
 		end_of_storage = finish;
 		for (size_type i = 0; i < count; ++i)
-			allocator.construct(start + i, value);
+			allocator.construct(start.operator->() + i, value);
 	}
 	template <typename InputIt> // tested
 	vector(InputIt first, InputIt last, const Allocator& alloc = Allocator(),
@@ -153,7 +255,7 @@ public:
 		finish = start + (last - first);
 		end_of_storage = finish;
 		for (size_type i = 0; i < static_cast<size_type>(last - first); ++i)
-			allocator.construct(start + i, *(first + i));
+			allocator.construct(start.operator->() + i, *(first + i));
 	}
 	vector(const vector& other) // tested
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator(other.allocator)
@@ -162,13 +264,13 @@ public:
 		finish = start + (other.finish - other.start);
 		end_of_storage = finish;
 		for (size_type i = 0; i < static_cast<size_type>(finish - start); ++i)
-			allocator.construct(start + i, *(other.start + i));
+			allocator.construct(start.operator->() + i, *(other.start + i));
 	}
 	~vector() // tested
 	{
 		for (size_type i = 0; i < static_cast<size_type>(finish - start); ++i)
-			allocator.destroy(start + i);
-		allocator.deallocate(start, capacity());
+			allocator.destroy(start.operator->() + i);
+		allocator.deallocate(start.operator->(), capacity());
 		start = NULL;
 		finish = NULL;
 		end_of_storage = NULL;
@@ -178,48 +280,48 @@ public:
 		if (this != &other)
 		{
 			for (size_type i = 0; i < size(); ++i)
-				allocator.destroy(start + i);
+				allocator.destroy(start.operator->() + i);
 			if (other.size() > capacity())
 			{
-				allocator.deallocate(start, capacity());
+				allocator.deallocate(start.operator->(), capacity());
 				start = allocator.allocate(other.size());
 				end_of_storage = start + other.size();
 			}
 			finish = start + other.size();
 			for (size_type i = 0; i < static_cast<size_type>(finish - start); ++i)
-				allocator.construct(start + i, *(other.start + i));
+				allocator.construct(start.operator->() + i, *(other.start + i));
 		}
 		return (*this);
 	}
 	void assign(size_type count, const T& value) // tested
 	{
 		for (size_type i = 0; i < size(); ++i)
-			allocator.destroy(start + i);
+			allocator.destroy(start.operator->() + i);
 		if (count > capacity())
 		{
-			allocator.deallocate(start, capacity());
+			allocator.deallocate(start.operator->(), capacity());
 			start = allocator.allocate(count);
 			end_of_storage = start + count;
 		}
 		finish = start + count;
 		for (size_type i = 0; i < count; ++i)
-			allocator.construct(start + i, value);
+			allocator.construct(start.operator->() + i, value);
 	}
 	template <typename InputIt> // tested
 	void assign(InputIt first, InputIt last,
 		typename enable_if< !is_integral<InputIt>::value, InputIt >::type = InputIt())
 	{
 		for (size_type i = 0; i < size(); ++i)
-			allocator.destroy(start + i);
+			allocator.destroy(start.operator->() + i);
 		if (static_cast<size_type>(last - first) > capacity())
 		{
-			allocator.deallocate(start, capacity());
+			allocator.deallocate(start.operator->(), capacity());
 			start = allocator.allocate(last - first);
 			end_of_storage = start + (last - first);
 		}
 		finish = start + (last - first);
 		for (size_type i = 0; i < static_cast<size_type>(last - first); ++i)
-			allocator.construct(start + i, *(first + i));
+			allocator.construct(start.operator->() + i, *(first + i));
 	}
 	allocator_type get_allocator(void) const { return (allocator); } // tested
 
@@ -267,10 +369,10 @@ public:
 		{
 			iterator newStart = allocator.allocate(new_cap);
 			for (size_type i = 0; i < size(); ++i)
-				allocator.construct(newStart + i, *(start + i));
+				allocator.construct(newStart.operator->() + i, *(start + i));
 			for (size_type i = 0; i < size(); ++i)
-				allocator.destroy(start + i);
-			allocator.deallocate(start, capacity());
+				allocator.destroy(start.operator->() + i);
+			allocator.deallocate(start.operator->(), capacity());
 			finish = newStart + size();
 			start = newStart;
 			end_of_storage = newStart + new_cap;
@@ -285,7 +387,7 @@ public:
 		size_type offset = pos - start;
 		if (size() + 1 > capacity())
 			reserve(size() * 2);		
-		allocator.construct(finish, *(finish - 1));
+		allocator.construct(finish.operator->(), *(finish - 1));
 		for (iterator i = finish - 1; i != start + offset; --i)
 			*i = *(i - 1);
 		*(start + offset) = value;
@@ -298,7 +400,7 @@ public:
 		if (size() + count > capacity())
 			reserve(std::max(size() * 2, size() + count));
 		for (iterator i = finish + count - 1; i != finish - 1; --i)
-			allocator.construct(i, *(i - count));		
+			allocator.construct(i.operator->(), *(i - count));		
 		for (iterator i = finish - 1; i > start + offset + count - 1; --i)
 			*i = *(i - count);
 		for (iterator i = start + offset; i != start + offset + count; ++i)
@@ -313,7 +415,7 @@ public:
 		if (size() + (last - first) > capacity())
 			reserve(std::max(size() * 2, size() + (last - first)));
 		for (iterator i = finish + (last - first) - 1; i != finish - 1; --i)
-			allocator.construct(i, *(i - (last - first)));
+			allocator.construct(i.operator->(), *(i - (last - first)));
 		for (iterator i = finish - 1; i > start + offset + (last - first) - 1; --i)
 			*i = *(i - (last - first));
 		for (size_type i = 0; i < static_cast<size_type>(last - first); ++i)
@@ -324,7 +426,7 @@ public:
 	{
 		for (iterator i = pos; i != finish - 1; ++i)
 			*i = *(i + 1);
-		allocator.destroy(finish - 1);
+		allocator.destroy(finish.operator->() - 1);
 		finish = finish - 1;
 		return (pos);
 	}
@@ -333,7 +435,7 @@ public:
 		for (size_type i = 0; i < static_cast<size_type>(finish - last); ++i)
 			*(first + i) = *(last + i);
 		for (iterator i = first + (finish - last); i != finish; ++i)
-			allocator.destroy(i);
+			allocator.destroy(i.operator->());
 		finish = first + (finish - last);
 		return (last);
 	}
@@ -341,12 +443,12 @@ public:
 	{
 		if (size() + 1 > capacity())
 			reserve(std::max(size() * 2, static_cast<size_type>(1)));
-		allocator.construct(finish, value);
+		allocator.construct(finish.operator->(), value);
 		finish = finish + 1;
 	}
 	void		pop_back(void) // tested
 	{
-		allocator.destroy(finish - 1);
+		allocator.destroy(finish.operator->() - 1);
 		finish = finish - 1;
 	}
 	void		resize(size_type count, T value = T()) // tested
