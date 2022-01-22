@@ -498,21 +498,28 @@ public:
 	typedef tree_reverse_iterator<red_black_tree>						reverse_iterator;
 	typedef tree_const_reverse_iterator<red_black_tree>					const_reverse_iterator;
 
-	node_pointer	root;
-	node_pointer	begin_node;
-	node_pointer	end_node;
-
-	red_black_tree()
+	red_black_tree(void)
 		: root(NULL), begin_node(new node_type()), end_node(new node_type()) { }
-	~red_black_tree() { delete_from_node(root); delete begin_node; delete end_node; }
+	red_black_tree(const red_black_tree& other)
+		: root(NULL), begin_node(new node_type()), end_node(new node_type())
+	{
+		for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
+			insert(*c_it++);
+	}
+	~red_black_tree(void) { delete_from_node(root); delete begin_node; delete end_node; }
 
-	iterator begin() { return (iterator(find_left_most_leaf(root), begin_node, end_node, find_right_most_leaf(root))); }
-	iterator end() { return (iterator(end_node, begin_node, end_node, find_right_most_leaf(root))); }
-	reverse_iterator rbegin() { return (reverse_iterator(find_right_most_leaf(root), end_node, begin_node, find_left_most_leaf(root))); }
-	reverse_iterator rend() { return (reverse_iterator(begin_node, end_node, begin_node, find_left_most_leaf(root))); }
+	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), begin_node, end_node, find_right_most_leaf(root))); }
+	iterator		 end(void)	  { return (iterator		(end_node, begin_node, end_node, find_right_most_leaf(root))); 					}
+	reverse_iterator rbegin(void) { return (reverse_iterator(find_right_most_leaf(root), end_node, begin_node, find_left_most_leaf(root)));	}
+	reverse_iterator rend(void)	  { return (reverse_iterator(begin_node, end_node, begin_node, find_left_most_leaf(root)));					}
 
-	node_pointer search(const key_type& key) { return (search(key, root)); }
-	void 	insert(const value_type& item)
+	const_iterator		   begin(void)	const { return (iterator		(find_left_most_leaf(root), begin_node, end_node, find_right_most_leaf(root))); }
+	const_iterator		   end(void)	const { return (iterator		(end_node, begin_node, end_node, find_right_most_leaf(root))); 					}
+	const_reverse_iterator rbegin(void) const { return (reverse_iterator(find_right_most_leaf(root), end_node, begin_node, find_left_most_leaf(root)));	}
+	const_reverse_iterator rend(void)	const { return (reverse_iterator(begin_node, end_node, begin_node, find_left_most_leaf(root)));					}
+
+	node_pointer	search(const key_type& key) { return (search(key, root)); }
+	void 			insert(const value_type& item)
 	{
 
 		node_pointer z = new node_type(item);
@@ -535,7 +542,7 @@ public:
 			y->right_child = z;
 		insert_fixup(z, &root);
 	}
-	void 	remove(const key_type& key)
+	void 			remove(const key_type& key)
 	{
 		node_pointer Node = search(key);
 		if (Node == NULL)
@@ -550,10 +557,11 @@ public:
 	}
 
 	// DEBUG
-	void	print(void) const { print("", root, false); }
+	void print(void) const { print("", root, false); }
 private:
-	red_black_tree(const red_black_tree& other);
-	red_black_tree& operator=(const red_black_tree& other);
+	node_pointer	root;
+	node_pointer	begin_node;
+	node_pointer	end_node;
 
 	void	print(const std::string& prefix, node_pointer x, bool isLeft) const
 	{

@@ -93,21 +93,32 @@ public:
 		compare = comp;
 		allocator = alloc;
 	}
-	template <class InputIt>
+	template <class InputIt> // tested
 	map(InputIt first, InputIt last, const Compare& comp = Compare(), const Allocator& alloc = Allocator())
 		: tree()
 	{
-		std::cout << "Hello\n";
-		// It's called.
+		compare = comp;
+		allocator = alloc;
 		while (first != last)
 			insert(*first++);
 	}
+	map(const map& other)
+		: tree(other.tree)
+	{
+		compare = other.compare;
+		allocator = other.allocator;
+	}
 	~map() { }
 
-	iterator begin(void) { return (tree.begin()); } // tested
-	iterator end(void)	 { return (tree.end()); } // tested
+	iterator 		 begin(void)  { return (tree.begin());  } // tested
+	iterator 		 end(void)	  { return (tree.end());    } // tested
 	reverse_iterator rbegin(void) { return (tree.rbegin()); } // tested
-	reverse_iterator rend(void) { return (tree.rend()); } // tested
+	reverse_iterator rend(void)   { return (tree.rend());   } // tested
+
+	const_iterator 		   begin(void)	const { return (tree.begin());	}
+	const_iterator 		   end(void)	const { return (tree.end());	}
+	const_reverse_iterator rbegin(void) const { return (tree.rbegin()); }
+	const_reverse_iterator rend(void)	const { return (tree.rend());	}
 
 	// DEBUG
 	void insert(const value_type& item) { tree.insert(item); }

@@ -39,7 +39,7 @@ public:
 	}
 	difference_type operator-(const vector_iterator& other) const
 	{
-		return (other.m_ptr - m_ptr);
+		return (m_ptr - other.m_ptr);
 	}
 	vector_iterator& operator++(void)
 	{
@@ -65,11 +65,11 @@ public:
 	}
 	reference operator[](difference_type index)
 	{
-		return *(m_ptr + index);
+		return (*(m_ptr + index));
 	}
 	const_reference operator[](difference_type index) const
 	{
-		return *(m_ptr + index);
+		return (*(m_ptr + index));
 	}
 	pointer	operator->()
 	{
@@ -81,11 +81,11 @@ public:
 	}
 	reference operator*()
 	{
-		return *(m_ptr);
+		return (*m_ptr);
 	}
 	const_reference operator*() const
 	{
-		return *(m_ptr);
+		return (*m_ptr);
 	}
 	bool operator==(const vector_iterator& other) const
 	{
