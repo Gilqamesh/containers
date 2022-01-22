@@ -56,32 +56,31 @@ int main()
 {	
 	PrintMemoryUsage();
 	{
+		ft::map<int, int> b;
 		ft::vector<ft::pair<int, int> > pairs;
 		pairs.push_back(ft::make_pair<int, int>(5, 6));
 		pairs.push_back(ft::make_pair<int, int>(2, 4));
 		pairs.push_back(ft::make_pair<int, int>(1, 3));
 		pairs.push_back(ft::make_pair<int, int>(-8, 3));
 		pairs.push_back(ft::make_pair<int, int>(93, 3));
-		for (ft::vector<ft::pair<int, int> >::iterator i = pairs.begin(); i != pairs.end(); i++)
+		{
+			ft::map<int, int> a(pairs.begin(), pairs.end());
+			b = a;
+		}
+		for (ft::map<int, int>::iterator i = b.begin(); i != b.end(); ++i)
 		{
 			LOG(i->first << " " << i->second);
 		}
+		
+		LOG("\n\n");
+		for (ft::map<int, int>::reverse_iterator i = b.rbegin(); i != b.rend(); ++i)
 		{
-			LOG("\n");
-			ft::map<int, int> a(pairs.begin(), pairs.end());
-			LOG("\n");
-			ft::map<int, int> b(a);
-			for (ft::map<int, int>::iterator i = b.begin(); i != b.end(); ++i)
-			{
-				LOG(i->first << " " << i->second);
-			}
-			
-			LOG("\n\n");
-			for (ft::map<int, int>::reverse_iterator i = b.rbegin(); i != b.rend(); ++i)
-			{
-				LOG(i->first << " " << i->second);
-			}
+			LOG(i->first << " " << i->second);
 		}
+
+		ft::map<int, int> c;
+		LOG(c[3]);
+		LOG(b[2]);
 	}
 	PrintMemoryUsage();
 }

@@ -102,13 +102,47 @@ public:
 		while (first != last)
 			insert(*first++);
 	}
-	map(const map& other)
+	map(const map& other) // tested
 		: tree(other.tree)
 	{
 		compare = other.compare;
 		allocator = other.allocator;
 	}
 	~map() { }
+	map& operator=(const map& other) // tested
+	{
+		if (this != &other)
+		{
+			compare = other.compare;
+			allocator = other.allocator;
+			tree = other.tree;
+		}
+		return (*this);
+	}
+	allocator_type get_allocator(void) const { return (allocator); } // tested
+
+	// Element access
+	T &at(const Key& key) // tested
+	{
+		node<base_node_type> *p = tree.search(key);
+		if (p == NULL)
+			throw std::out_of_range("The key is not in the map");
+		return (p->base.data->second);
+	}
+	const T& at(const Key& key) const // tested
+	{
+		const node<base_node_type> *p = tree.search(key);
+		if (p == NULL)
+			throw std::out_of_range("The key is not in the map");
+		return (p->base.data->second);
+	}
+	T& operator[](const Key& key)
+	{
+		node<base_node_type> *p = tree.search(key);
+		if (p == NULL)
+			return (insert(ft::make_pair<const Key, T>(key, T())).second);
+		return (p->base.data->second);
+	}
 
 	iterator 		 begin(void)  { return (tree.begin());  } // tested
 	iterator 		 end(void)	  { return (tree.end());    } // tested
@@ -121,8 +155,8 @@ public:
 	const_reverse_iterator rend(void)	const { return (tree.rend());	}
 
 	// DEBUG
-	void insert(const value_type& item) { tree.insert(item); }
-	void print() const { tree.print(); }
+	reference insert(const value_type& item) { return (*tree.insert(item)->base.data); }
+	void	  print() const { tree.print(); }
 private:
 	red_black_tree<map>			tree;
 	static Compare				compare;

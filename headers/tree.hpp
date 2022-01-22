@@ -485,7 +485,12 @@ public:
 	typedef typename NodeContainer::const_reference						const_reference;
 	typedef typename NodeContainer::pointer								pointer;
 	typedef typename NodeContainer::const_pointer						const_pointer;
+
 	typedef typename NodeContainer::base_node_type						base_node_type;
+	typedef typename NodeContainer::base_node_pointer					base_node_pointer;
+	typedef typename NodeContainer::base_node_const_pointer				base_node_const_pointer;
+	typedef typename NodeContainer::base_node_reference					base_node_reference;
+	typedef typename NodeContainer::base_node_const_reference			base_node_const_reference;
 
 	typedef node<base_node_type>										node_type;
 	typedef node<base_node_type>*										node_pointer;
@@ -504,9 +509,28 @@ public:
 		: root(NULL), begin_node(new node_type()), end_node(new node_type())
 	{
 		for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
-			insert(*c_it++);
+			insert(*c_it);
 	}
-	~red_black_tree(void) { delete_from_node(root); delete begin_node; delete end_node; }
+	~red_black_tree(void)
+	{
+		delete_from_node(root);
+		root = NULL;
+		delete begin_node;
+		begin_node = NULL;
+		delete end_node;
+		end_node = NULL;
+	}
+	red_black_tree& operator=(const red_black_tree& other)
+	{
+		if (this != &other)
+		{
+			delete_from_node(root);
+			root = NULL;
+			for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
+				insert(*c_it);
+		}
+		return (*this);
+	}
 
 	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), begin_node, end_node, find_right_most_leaf(root))); }
 	iterator		 end(void)	  { return (iterator		(end_node, begin_node, end_node, find_right_most_leaf(root))); 					}
@@ -518,8 +542,9 @@ public:
 	const_reverse_iterator rbegin(void) const { return (reverse_iterator(find_right_most_leaf(root), end_node, begin_node, find_left_most_leaf(root)));	}
 	const_reverse_iterator rend(void)	const { return (reverse_iterator(begin_node, end_node, begin_node, find_left_most_leaf(root)));					}
 
-	node_pointer	search(const key_type& key) { return (search(key, root)); }
-	void 			insert(const value_type& item)
+	node_pointer		search(const key_type& key)		  { return (search_from_node(key, root, NodeContainer::compare)); }
+	node_const_pointer	search(const key_type& key) const { return (search_from_node(key, root, NodeContainer::compare)); }
+	node_pointer 		insert(const value_type& item)
 	{
 
 		node_pointer z = new node_type(item);
@@ -541,10 +566,11 @@ public:
 		else
 			y->right_child = z;
 		insert_fixup(z, &root);
+		return (z);
 	}
 	void 			remove(const key_type& key)
 	{
-		node_pointer Node = search(key);
+		node_pointer Node = search(key, root);
 		if (Node == NULL)
 			return ;
 		
@@ -587,16 +613,16 @@ node_pointer getRoot(node_pointer a)
 }
 
 template <class node_pointer, typename key_type, class key_compare>
-node_pointer search(const key_type& key, node_pointer x)
+node_pointer search_from_node(const key_type& key, node_pointer x, key_compare compare)
 {
 	if (x == NULL)
 		return (NULL);
-	if (key == x->getKey())
+	if (key == x->base.getKey())
 		return (x);
-	if (key_compare()(key, x->getKey()))
-		return (search(key, x->left_child));
+	if (compare(key, x->base.getKey()))
+		return (search_from_node(key, x->left_child, compare));
 	else
-		return (search(key, x->right_child));
+		return (search_from_node(key, x->right_child, compare));
 }
 
 template <class node_pointer>
