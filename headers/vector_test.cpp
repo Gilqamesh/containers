@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <functional>
 
+# define LOG(x) (std::cout << (x) << std::endl)
+
 class entity
 {
 public:
@@ -46,12 +48,12 @@ struct comp
 	}
 };
 
+#if 0
+	#define ft std
+#endif
+
 int main()
-{
-	// std::cout << (ft::is_same< std::size_t, ft::vector<int>::size_type >::value) << std::endl;
-	// std::cout << (ft::is_same< double, ft::vector<int>::size_type >::value) << std::endl;
-	std::vector<int>::iterator it;
-	
+{	
 	ft::vector<entity> a;
 	a.push_back(entity(2));
 	a.push_back(entity(-3));
@@ -59,13 +61,10 @@ int main()
 	a.push_back(entity(42));
 	a.push_back(entity(1));
 
-	ft::vector<entity> d;
-	d.push_back(entity(-100));
+	const ft::vector<entity> &b = a;
 
-	ft::swap(a, d);
-
-	std::cout << "Size of a: " << a.size() << ", Capacity: " << a.capacity() << std::endl;
-	std::cout << "Size of d: " << d.size() << ", Capacity: " << d.capacity() << std::endl;
+	for (ft::vector<entity>::const_reverse_iterator ri = b.rbegin(); ri != b.rend(); ++ri)
+		LOG(*ri);
 }
 
 std::ostream &operator<<(std::ostream &os, const entity& e)

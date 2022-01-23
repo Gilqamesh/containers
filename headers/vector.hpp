@@ -11,209 +11,98 @@
 namespace ft
 {
 
-template <typename vector>
+template <typename T>
 class vector_iterator
 {
 public:
-	typedef typename std::ptrdiff_t				difference_type;
-	typedef typename vector::value_type			value_type;
-	typedef typename vector::pointer			pointer;
-	typedef typename vector::const_pointer		const_pointer;
-	typedef typename vector::reference			reference;
-	typedef typename vector::const_reference	const_reference;
-	typedef random_access_iterator_tag			iterator_category;
+	typedef iterator<random_access_iterator_tag, T>							iterator_type;
+	typedef typename iterator_traits<iterator_type>::difference_type		difference_type;
+	typedef typename iterator_traits<iterator_type>::value_type				value_type;
+	typedef typename iterator_traits<iterator_type>::pointer				pointer;
+	typedef typename iterator_traits<iterator_type>::reference				reference;
+	typedef typename iterator_traits<iterator_type>::iterator_category		iterator_category;
 
 	vector_iterator()
 		: m_ptr(NULL) { }
 	vector_iterator(pointer ptr)
 		: m_ptr(ptr) { }
 	vector_iterator(const vector_iterator& other)
-		: m_ptr(other.m_ptr) { }
-	vector_iterator& operator=(const vector_iterator& other)
-	{
-		if (this != &other)
-		{
-			m_ptr = other.m_ptr;
-		}
-		return (*this);
-	}
-	difference_type operator-(const vector_iterator& other) const
-	{
-		return (m_ptr - other.m_ptr);
-	}
-	vector_iterator& operator++(void)
-	{
-		++m_ptr;
-		return (*this);
-	}
-	vector_iterator operator++(int)
-	{
-		vector_iterator temp(*this);
-		++m_ptr;
-		return (temp);
-	}
-	vector_iterator& operator--(void)
-	{
-		--m_ptr;
-		return (*this);
-	}
-	vector_iterator operator--(int)
-	{
-		vector_iterator temp(*this);
-		--m_ptr;
-		return (temp);
-	}
-	reference operator[](difference_type index)
-	{
-		return (*(m_ptr + index));
-	}
-	const_reference operator[](difference_type index) const
-	{
-		return (*(m_ptr + index));
-	}
-	pointer	operator->()
-	{
-		return (m_ptr);
-	}
-	const_pointer operator->() const
-	{
-		return (m_ptr);
-	}
-	reference operator*()
-	{
-		return (*m_ptr);
-	}
-	const_reference operator*() const
-	{
-		return (*m_ptr);
-	}
-	bool operator==(const vector_iterator& other) const
-	{
-		return (m_ptr == other.m_ptr);
-	}
-	bool operator!=(const vector_iterator& other) const
-	{
-		return (!(*this == other));
-	}
-	vector_iterator &operator-=(const vector_iterator& other)
-	{
-		m_ptr = m_ptr - other.m_ptr;
-		return (*this);
-	}
+		: m_ptr(other.base()) { }
+	~vector_iterator() { }
+	operator			vector_iterator<const T>() const { return (vector_iterator<const T>(base())); }
+	vector_iterator&	operator=(const vector_iterator& other) { if (this != &other) m_ptr = other.m_ptr; return (*this); }
+	difference_type		operator-(const vector_iterator& other) const { return (m_ptr - other.m_ptr); }
+	vector_iterator&	operator++(void) { ++m_ptr; return (*this); }
+	vector_iterator		operator++(int) { vector_iterator temp(*this); ++m_ptr; return (temp); }
+	vector_iterator&	operator--(void) { --m_ptr; return (*this); }
+	vector_iterator		operator--(int) { vector_iterator temp(*this); --m_ptr; return (temp); }
+	
+	reference			operator[](difference_type index) const { return (*(m_ptr + index)); }
+	pointer				operator->() const { return (m_ptr); }
+	reference			operator*() const { return (*m_ptr); }
+	vector_iterator		&operator-=(const vector_iterator& other) { m_ptr = m_ptr - other.m_ptr; return (*this); }
+	vector_iterator		operator+(difference_type n) const { return (vector_iterator(m_ptr + n)); }
+	vector_iterator		operator-(difference_type n) const { return (vector_iterator(m_ptr - n)); }
+	vector_iterator		&operator+=(difference_type n) { m_ptr += n; return (*this); }
+	vector_iterator		&operator-=(difference_type n) { m_ptr -= n; return (*this); }
 
+	pointer				base() const { return (m_ptr); }
 private:
 	pointer	m_ptr;
 };
 
-template <typename vector>
-typename vector_iterator<vector>::difference_type
-operator-(vector_iterator<vector>& it1, vector_iterator<vector>& it2)
+template <class Iterator1, class Iterator2>
+bool operator==(const vector_iterator<Iterator1>& lhs, const vector_iterator<Iterator2>& rhs)
 {
-	return (it1.operator->() - it2.operator->());
+	return (lhs.base() == rhs.base());
 }
 
-template <typename vector, typename T>
-vector_iterator<vector>
-operator+(vector_iterator<vector>& it, T a)
+template <class Iterator1, class Iterator2>
+bool operator!=(const vector_iterator<Iterator1>& lhs, const vector_iterator<Iterator2>& rhs)
 {
-	return (it.operator->() + a);
+	return (lhs.base() != rhs.base());
 }
 
-template <typename vector>
-class vector_const_iterator
+template <class Iterator1, class Iterator2>
+bool operator<(const vector_iterator<Iterator1>& lhs, const vector_iterator<Iterator2>& rhs)
 {
-public:
-	typedef typename vector::difference_type	difference_type;
-	typedef typename vector::value_type			value_type;
-	typedef typename vector::pointer			pointer;
-	typedef typename vector::const_pointer		const_pointer;
-	typedef typename vector::const_reference	const_reference;
-	typedef random_access_iterator_tag			iterator_category;
-
-	vector_const_iterator()
-		: m_ptr(NULL) { }
-	vector_const_iterator(pointer ptr)
-		: m_ptr(ptr) { }
-	vector_const_iterator(const vector_iterator<vector>& other)
-		: m_ptr(other.operator->()) { }
-	vector_const_iterator(const vector_const_iterator& other)
-		: m_ptr(other.m_ptr) { }
-	vector_const_iterator& operator=(const vector_const_iterator& other)
-	{
-		if (this != &other)
-		{
-			m_ptr = other.m_ptr;
-		}
-		return (*this);
-	}
-	difference_type operator-(const vector_const_iterator& other) const
-	{
-		return (other.m_ptr - m_ptr);
-	}
-	vector_const_iterator& operator++(void)
-	{
-		++m_ptr;
-		return (*this);
-	}
-	vector_const_iterator operator++(int)
-	{
-		vector_const_iterator temp(*this);
-		++m_ptr;
-		return (temp);
-	}
-	vector_const_iterator& operator--(void)
-	{
-		--m_ptr;
-		return (*this);
-	}
-	vector_const_iterator operator--(int)
-	{
-		vector_const_iterator temp(*this);
-		--m_ptr;
-		return (temp);
-	}
-	const_reference operator[](difference_type index) const
-	{
-		return *(m_ptr + index);
-	}
-	const_pointer operator->() const
-	{
-		return (m_ptr);
-	}
-	const_reference operator*() const
-	{
-		return *(m_ptr);
-	}
-	bool operator==(const vector_const_iterator& other) const
-	{
-		return (m_ptr == other.m_ptr);
-	}
-	bool operator!=(const vector_const_iterator& other) const
-	{
-		return (!(*this == other));
-	}
-	vector_const_iterator &operator-=(const vector_const_iterator& other)
-	{
-		m_ptr = m_ptr - other.m_ptr;
-		return (*this);
-	}
-
-private:
-	pointer	m_ptr;
-};
-
-template <typename vector>
-typename vector_const_iterator<vector>::difference_type
-operator-(vector_const_iterator<vector>& it1, vector_const_iterator<vector>& it2)
-{
-	return (it1.operator->() - it2.operator->());
+	return (lhs.base() < rhs.base());
 }
 
-template <typename vector, typename T>
-vector_const_iterator<vector>
-operator+(vector_const_iterator<vector>& it, T a)
+template <class Iterator1, class Iterator2>
+bool operator<=(const vector_iterator<Iterator1>& lhs, const vector_iterator<Iterator2>& rhs)
 {
-	return (it.operator->() + a);
+	return (lhs.base() <= rhs.base());
+}
+
+template <class Iterator1, class Iterator2>
+bool operator>(const vector_iterator<Iterator1>& lhs, const vector_iterator<Iterator2>& rhs)
+{
+	return (lhs.base() > rhs.base());
+}
+
+template <class Iterator1, class Iterator2>
+bool operator>=(const vector_iterator<Iterator1>& lhs, const vector_iterator<Iterator2>& rhs)
+{
+	return (lhs.base() >= rhs.base());
+}
+
+template <class Iter>
+vector_iterator<Iter> operator+(typename vector_iterator<Iter>::difference_type n, const vector_iterator<Iter>& it)
+{
+	return (vector_iterator<Iter>(it.base() + n));
+}
+
+template <class Iter>
+typename vector_iterator<Iter>::difference_type operator-(const vector_iterator<Iter>& lhs, const vector_iterator<Iter>& rhs)
+{
+	return (lhs.base() - rhs.base());
+}
+
+template <class Iter1, class Iter2>
+typename vector_iterator<Iter1>::difference_type operator-(const vector_iterator<Iter1>& lhs, const vector_iterator<Iter2>& rhs)
+{
+	return (lhs.base() - rhs.base());
 }
 
 template <typename T, typename Allocator = std::allocator<T> >
@@ -228,8 +117,8 @@ public:
 	typedef const value_type&									const_reference;
 	typedef value_type*											pointer;
 	typedef const value_type*									const_pointer;
-	typedef vector_iterator<vector>								iterator;
-	typedef vector_const_iterator<vector>						const_iterator;
+	typedef vector_iterator<value_type>							iterator;
+	typedef vector_iterator<const value_type>					const_iterator;
 	typedef typename ft::reverse_iterator<iterator>				reverse_iterator;
 	typedef typename ft::reverse_iterator<const_iterator>		const_reverse_iterator;
 	
@@ -251,11 +140,12 @@ public:
 		typename ft::enable_if< !is_integral<InputIt>::value, InputIt >::type = InputIt())
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator(alloc)
 	{
-		start = allocator.allocate(last - first);
-		finish = start + (last - first);
+		difference_type dist = ft::distance(first, last);
+		start = allocator.allocate(dist);
+		finish = start + dist;
 		end_of_storage = finish;
-		for (size_type i = 0; i < static_cast<size_type>(last - first); ++i)
-			allocator.construct(start.operator->() + i, *(first + i));
+		for (difference_type i = 0; i < dist; ++i)
+			allocator.construct(start.operator->() + i, *first++);
 	}
 	vector(const vector& other) // tested
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator(other.allocator)
@@ -263,12 +153,12 @@ public:
 		start = allocator.allocate(other.finish - other.start);
 		finish = start + (other.finish - other.start);
 		end_of_storage = finish;
-		for (size_type i = 0; i < static_cast<size_type>(finish - start); ++i)
+		for (difference_type i = 0; i < finish - start; ++i)
 			allocator.construct(start.operator->() + i, *(other.start + i));
 	}
 	~vector() // tested
 	{
-		for (size_type i = 0; i < static_cast<size_type>(finish - start); ++i)
+		for (difference_type i = 0; i < finish - start; ++i)
 			allocator.destroy(start.operator->() + i);
 		allocator.deallocate(start.operator->(), capacity());
 		start = NULL;
@@ -288,7 +178,7 @@ public:
 				end_of_storage = start + other.size();
 			}
 			finish = start + other.size();
-			for (size_type i = 0; i < static_cast<size_type>(finish - start); ++i)
+			for (difference_type i = 0; i < finish - start; ++i)
 				allocator.construct(start.operator->() + i, *(other.start + i));
 		}
 		return (*this);
@@ -311,17 +201,18 @@ public:
 	void assign(InputIt first, InputIt last,
 		typename enable_if< !is_integral<InputIt>::value, InputIt >::type = InputIt())
 	{
+		difference_type dist = ft::distance(first, last);
 		for (size_type i = 0; i < size(); ++i)
 			allocator.destroy(start.operator->() + i);
-		if (static_cast<size_type>(last - first) > capacity())
+		if (static_cast<size_type>(dist) > capacity())
 		{
 			allocator.deallocate(start.operator->(), capacity());
-			start = allocator.allocate(last - first);
-			end_of_storage = start + (last - first);
+			start = allocator.allocate(dist);
+			end_of_storage = start + dist;
 		}
-		finish = start + (last - first);
-		for (size_type i = 0; i < static_cast<size_type>(last - first); ++i)
-			allocator.construct(start.operator->() + i, *(first + i));
+		finish = start + dist;
+		for (difference_type i = 0; i < dist; ++i)
+			allocator.construct(start.operator->() + i, *first++);
 	}
 	allocator_type get_allocator(void) const { return (allocator); } // tested
 
@@ -353,9 +244,9 @@ public:
 	iterator				end(void)		   { return (finish); } // tested
 	const_iterator			end(void)	 const { return (finish); }
 	reverse_iterator		rbegin(void)	   { return (reverse_iterator(finish)); } // tested
-	const_reverse_iterator	rbegin(void) const { return (const_reverse_iterator(finish)); }
+	const_reverse_iterator	rbegin(void) const { return (const_reverse_iterator(finish)); } // tested
 	reverse_iterator		rend(void)		   { return (reverse_iterator(start)); } // tested
-	const_reverse_iterator	rend(void) const   { return (const_reverse_iterator(start)); }
+	const_reverse_iterator	rend(void)	 const { return (const_reverse_iterator(start)); } // tested
 
 	// Capacity
 	bool		empty(void) const { return (start == finish); } // tested
@@ -411,16 +302,17 @@ public:
 	void		insert(iterator pos, InputIt first, InputIt last,
 		typename enable_if< !is_integral<InputIt>::value, InputIt >::type = InputIt())
 	{
+		difference_type dist = ft::distance(first, last);
 		size_type offset = pos - start;
-		if (size() + (last - first) > capacity())
-			reserve(std::max(size() * 2, size() + (last - first)));
-		for (iterator i = finish + (last - first) - 1; i != finish - 1; --i)
-			allocator.construct(i.operator->(), *(i - (last - first)));
-		for (iterator i = finish - 1; i > start + offset + (last - first) - 1; --i)
-			*i = *(i - (last - first));
-		for (size_type i = 0; i < static_cast<size_type>(last - first); ++i)
-			*(start + offset + i) = *(first + i);
-		finish = finish + (last - first);
+		if (size() + static_cast<size_type>(dist) > capacity())
+			reserve(std::max(size() * 2, size() + static_cast<size_type>(dist)));
+		for (iterator i = finish + dist - 1; i != finish - 1; --i)
+			allocator.construct(i.operator->(), *(i - dist));
+		for (iterator i = finish - 1; i > start + offset + dist - 1; --i)
+			*i = *(i - dist);
+		for (difference_type i = 0; i < dist; ++i)
+			*(start + offset + i) = *first++;
+		finish = finish + dist;
 	}
 	iterator	erase(iterator pos) // tested
 	{

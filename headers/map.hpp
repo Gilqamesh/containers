@@ -144,6 +144,7 @@ public:
 		return (p->base.data->second);
 	}
 
+	// Iterators
 	iterator 		 begin(void)  { return (tree.begin());  } // tested
 	iterator 		 end(void)	  { return (tree.end());    } // tested
 	reverse_iterator rbegin(void) { return (tree.rbegin()); } // tested

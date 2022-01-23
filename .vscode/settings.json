@@ -75,6 +75,7 @@
 		"list": "cpp",
 		"set": "cpp",
 		"iomanip": "cpp",
-		"__undef_macros": "cpp"
+		"__undef_macros": "cpp",
+		"queue": "cpp"
 	}
 }
