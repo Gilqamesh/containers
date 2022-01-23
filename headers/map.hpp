@@ -136,7 +136,7 @@ public:
 			throw std::out_of_range("The key is not in the map");
 		return (p->base.data->second);
 	}
-	T& operator[](const Key& key)
+	T& operator[](const Key& key) // tested
 	{
 		node<base_node_type> *p = tree.search(key);
 		if (p == NULL)
