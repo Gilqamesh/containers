@@ -20,6 +20,7 @@ public:
 	typedef typename map::value_type				value_type;
 	typedef typename map::key_type					key_type;
 	typedef typename map::pointer					pointer;
+	typedef typename map::reference					reference;
 
 	map_node()
 	{
@@ -63,27 +64,27 @@ class map
 friend class map_node<map>;
 friend class red_black_tree<map>;
 private:
-	typedef map_node<map>														base_node_type;
-	typedef map_node<map>*														base_node_pointer;
-	typedef const map_node<map>*												base_node_const_pointer;
-	typedef map_node<map>&														base_node_reference;
-	typedef const map_node<map>&												base_node_const_reference;
+	typedef map_node<map>												base_node_type;
+	typedef map_node<map>*												base_node_pointer;
+	typedef const map_node<map>*										base_node_const_pointer;
+	typedef map_node<map>&												base_node_reference;
+	typedef const map_node<map>&										base_node_const_reference;
 public:
-	typedef Key																	key_type;
-	typedef T																	mapped_type;
-	typedef typename ft::pair<const Key, T>										value_type;
-	typedef typename std::size_t												size_type;
-	typedef typename std::ptrdiff_t												difference_type;
-	typedef Compare																key_compare;
-	typedef Allocator															allocator_type;
-	typedef value_type&															reference;
-	typedef const value_type&													const_reference;
-	typedef typename Allocator::pointer											pointer;
-	typedef typename Allocator::const_pointer									const_pointer;
-	typedef tree_iterator<red_black_tree<map> > 								iterator;
-	typedef tree_const_iterator<red_black_tree<map> >							const_iterator;
-	typedef tree_reverse_iterator<red_black_tree<map> >							reverse_iterator;
-	typedef tree_const_reverse_iterator<red_black_tree<map> >					const_reverse_iterator;
+	typedef Key															key_type;
+	typedef T															mapped_type;
+	typedef typename ft::pair<const Key, T>								value_type;
+	typedef typename std::size_t										size_type;
+	typedef typename std::ptrdiff_t										difference_type;
+	typedef Compare														key_compare;
+	typedef Allocator													allocator_type;
+	typedef value_type&													reference;
+	typedef const value_type&											const_reference;
+	typedef typename Allocator::pointer									pointer;
+	typedef typename Allocator::const_pointer							const_pointer;
+	typedef typename red_black_tree<map>::iterator 						iterator;
+	typedef typename red_black_tree<map>::const_iterator 				const_iterator;
+	typedef typename red_black_tree<map>::reverse_iterator 				reverse_iterator;
+	typedef typename red_black_tree<map>::const_reverse_iterator 		const_reverse_iterator;
 
 	map()
 		: tree() { } // tested

@@ -52,35 +52,20 @@ void PrintMemoryUsage()
 	std::cout << "Memory Usage: " << s_AllocationMetrics.CurrentUsage() << " bytes" << std::endl;
 }
 
+#define TESTED_NAMESPACE ft
+
 int main()
 {
 	PrintMemoryUsage();
 	{
-		ft::map<int, int> b;
-		ft::vector<ft::pair<int, int> > pairs;
-		pairs.push_back(ft::make_pair<int, int>(5, 6));
-		pairs.push_back(ft::make_pair<int, int>(2, 4));
-		pairs.push_back(ft::make_pair<int, int>(1, 3));
-		pairs.push_back(ft::make_pair<int, int>(-8, 3));
-		pairs.push_back(ft::make_pair<int, int>(93, 3));
-		{
-			ft::map<int, int> a(pairs.begin(), pairs.end());
-			b = a;
-		}
-		for (ft::map<int, int>::iterator i = b.begin(); i != b.end(); ++i)
-		{
-			LOG(i->first << " " << i->second);
-		}
-		
-		LOG("\n\n");
-		for (ft::map<int, int>::reverse_iterator i = b.rbegin(); i != b.rend(); ++i)
-		{
-			LOG(i->first << " " << i->second);
-		}
+		TESTED_NAMESPACE::map<int, int> a;
+		a.insert(TESTED_NAMESPACE::make_pair<int, int>(3, 5));
+		a.insert(TESTED_NAMESPACE::make_pair<int, int>(4, 5));
+		a.insert(TESTED_NAMESPACE::make_pair<int, int>(7, 5));
+		a.insert(TESTED_NAMESPACE::make_pair<int, int>(-2, 5));
 
-		ft::map<int, int> c;
-		LOG(c[3]);
-		LOG(b[2]);
+		for (TESTED_NAMESPACE::map<int, int>::reverse_iterator i = a.rbegin(); i != a.rend(); ++i)
+			std::cout << i->first << std::endl;
 	}
 	PrintMemoryUsage();
 }

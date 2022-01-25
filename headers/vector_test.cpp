@@ -54,17 +54,9 @@ struct comp
 
 int main()
 {	
-	ft::vector<entity> a;
-	a.push_back(entity(2));
-	a.push_back(entity(-3));
-	a.push_back(entity(12));
-	a.push_back(entity(42));
-	a.push_back(entity(1));
-
-	const ft::vector<entity> &b = a;
-
-	for (ft::vector<entity>::const_reverse_iterator ri = b.rbegin(); ri != b.rend(); ++ri)
-		LOG(*ri);
+	std::vector<int> a;
+	a.push_back(5);
+	std::cout << "Capacity: " << a.capacity() << std::endl;
 }
 
 std::ostream &operator<<(std::ostream &os, const entity& e)

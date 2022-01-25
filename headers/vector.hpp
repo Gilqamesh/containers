@@ -8,6 +8,9 @@
 # include "iterator.hpp"
 # include "algorithm.hpp"
 
+# include <iostream>
+# define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
+
 namespace ft
 {
 
@@ -275,9 +278,15 @@ public:
 	void		clear(void) { erase(begin(), end()); } // tested
 	iterator	insert(iterator pos, const T& value) // tested
 	{
-		size_type offset = pos - start;
+		difference_type offset = pos - start;
 		if (size() + 1 > capacity())
-			reserve(size() * 2);		
+			reserve(std::max(size() * 2, static_cast<size_type>(1)));
+		if (offset == finish - start)
+		{
+			allocator.construct(finish.operator->(), value);
+			++finish;
+			return (start + offset);
+		}
 		allocator.construct(finish.operator->(), *(finish - 1));
 		for (iterator i = finish - 1; i != start + offset; --i)
 			*i = *(i - 1);
@@ -287,7 +296,7 @@ public:
 	}
 	void		insert(iterator pos, size_type count, const T& value) // tested
 	{
-		size_type offset = pos - start;
+		difference_type offset = pos - start;
 		if (size() + count > capacity())
 			reserve(std::max(size() * 2, size() + count));
 		for (iterator i = finish + count - 1; i != finish - 1; --i)
@@ -324,12 +333,12 @@ public:
 	}
 	iterator	erase(iterator first, iterator last) // tested
 	{
-		for (size_type i = 0; i < static_cast<size_type>(finish - last); ++i)
+		for (difference_type i = 0; i < finish - last; ++i)
 			*(first + i) = *(last + i);
 		for (iterator i = first + (finish - last); i != finish; ++i)
 			allocator.destroy(i.operator->());
 		finish = first + (finish - last);
-		return (last);
+		return (first); // wrong return
 	}
 	void		push_back(const T& value) // tested
 	{
@@ -423,6 +432,15 @@ void swap(vector<T, Alloc>& lhs, vector<T, Alloc>& rhs)
 	lhs.swap(rhs);
 }
 
+// DEBUG
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const vector<T>& v)
+{
+	for (typename vector<T>::const_iterator i = v.begin(); i != v.end(); ++i)
+		os << *i << " ";
+	return (os);
 }
+
+} // ft
 
 #endif
