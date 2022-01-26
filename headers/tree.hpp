@@ -11,7 +11,8 @@
 namespace ft
 {
 
-template <class T>
+// T pair
+template <typename NodePtr, typename T>
 class tree_iterator
 {
 public:
@@ -19,17 +20,13 @@ public:
 	typedef typename iterator_traits<iterator_type>::difference_type		difference_type;
 	typedef typename iterator_traits<iterator_type>::value_type				value_type;
 	typedef typename iterator_traits<iterator_type>::pointer				pointer;
-	typedef typename value_type::pointer									base_pointer;
 	typedef typename iterator_traits<iterator_type>::reference				reference;
-	typedef typename value_type::reference									base_reference;
 	typedef typename iterator_traits<iterator_type>::iterator_category		iterator_category;
 
-	tree_iterator()
-		: ptr(NULL), start_node(NULL), start_leaf_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
-	tree_iterator(pointer p, pointer start, pointer start_leaf, pointer end, pointer end_leaf)
-		: ptr(p), start_node(start), start_leaf_node(start_leaf), end_node(end), end_leaf_node(end_leaf) { }
+	tree_iterator(NodePtr p, NodePtr start, NodePtr start_leaf, NodePtr end, NodePtr end_leaf)
+		: ptr(p == NULL ? end : p), start_node(start), start_leaf_node(start_leaf), end_node(end), end_leaf_node(end_leaf) { }
 	tree_iterator(const tree_iterator& other)
-		: ptr(other.ptr), start_node(other.start_node), start_leaf_node(other.start_leaf_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+		: ptr(other.base()), start_node(other.start_node), start_leaf_node(other.start_leaf_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
 	tree_iterator& operator=(const tree_iterator& other)
 	{
 		if (this != &other)
@@ -43,15 +40,17 @@ public:
 		return (*this);
 	}
 	~tree_iterator() { }
-	operator tree_iterator<const T>() const { return (tree_iterator<const T>(ptr, start_node, start_leaf_node, end_node, end_leaf_node)); }
+	operator tree_iterator<NodePtr, const T>() const { return (tree_iterator<NodePtr, const T>(ptr, start_node, start_leaf_node, end_node, end_leaf_node)); }
 	tree_iterator &operator++()
 	{
 		if (ptr == start_node)
 			ptr = start_leaf_node;
 		else
+		{
 			ptr = get_successor(ptr);
-		if (ptr == NULL)
-			ptr = end_node;
+			if (ptr == NULL)
+				ptr = end_node;
+		}
 		return (*this);
 	}
 	tree_iterator operator++(int)
@@ -65,9 +64,11 @@ public:
 		if (ptr == end_node)
 			ptr = end_leaf_node;
 		else
+		{
 			ptr = get_predecessor(ptr);
-		if (ptr == NULL)
-			ptr = start_node;
+			if (ptr == NULL)
+				ptr = start_node;
+		}
 		return (*this);
 	}
 	tree_iterator operator--(int)
@@ -76,142 +77,41 @@ public:
 		--*this;
 		return (tmp);
 	}
-	base_reference operator*() const
+	reference operator*() const
 	{
 		return (*ptr->base.data);
 	}
-	base_pointer operator->() const
+	pointer operator->() const
 	{
 		return (ptr->base.data);
 	}
-	base_pointer base() const
+	NodePtr base() const
 	{
-		return (ptr->base.data);
+		return (ptr);
 	}
 
 private:
-	pointer 	ptr;
-	pointer 	start_node;
-	pointer		start_leaf_node;
-	pointer 	end_node;
-	pointer 	end_leaf_node;
+	tree_iterator()
+		: ptr(NULL), start_node(NULL), start_leaf_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
+	
+	NodePtr 	ptr;
+	NodePtr 	start_node;
+	NodePtr		start_leaf_node;
+	NodePtr 	end_node;
+	NodePtr 	end_leaf_node;
 };
 
-template <class Iterator1, class Iterator2>
-bool operator==(const tree_iterator<Iterator1>& lhs, const tree_iterator<Iterator2>& rhs)
+template <typename NodePtr, class T1, class T2>
+bool operator==(const tree_iterator<NodePtr, T1>& lhs, const tree_iterator<NodePtr, T2>& rhs)
 {
 	return (lhs.base() == rhs.base());
 }
 
-template <class Iterator1, class Iterator2>
-bool operator!=(const tree_iterator<Iterator1>& lhs, const tree_iterator<Iterator2>& rhs)
+template <typename NodePtr, class T1, class T2>
+bool operator!=(const tree_iterator<NodePtr, T1>& lhs, const tree_iterator<NodePtr, T2>& rhs)
 {
 	return (lhs.base() != rhs.base());
 }
-
-template <class tree>
-class tree_const_iterator
-{
-public:
-	typedef typename tree::node_pointer			node_pointer;
-	typedef typename tree::const_pointer		const_pointer;
-	typedef typename tree::const_reference		const_reference;
-
-	tree_const_iterator()
-		: ptr(NULL), start_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
-	tree_const_iterator(node_pointer p, node_pointer start, node_pointer end, node_pointer end_leaf_node)
-		: ptr(p), start_node(start), end_node(end), end_leaf_node(end_leaf_node) { }
-	tree_const_iterator(const tree_const_iterator& other)
-		: ptr(other.ptr), start_node(other.start_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
-	tree_const_iterator(const tree_iterator<tree>& other)
-		: ptr(other.ptr), start_node(other.start_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
-	tree_const_iterator& operator=(const tree_const_iterator& other)
-	{
-		if (this != &other)
-		{
-			ptr = other.ptr;
-			start_node = other.start_node;
-			end_node = other.end_node;
-			end_leaf_node = other.end_leaf_node;
-		}
-		return (*this);
-	}
-	~tree_const_iterator() { }
-
-	const_pointer operator->()
-	{
-		if (ptr == NULL)
-			return (end_node->base.data);
-		return (ptr->base.data);
-	}
-	const_reference operator*()
-	{
-		if (ptr == NULL)
-			return (*end_node->base.data);
-		return (*ptr->base.data);
-	}
-	tree_const_iterator &operator++()
-	{
-		ptr = get_successor(ptr);
-		if (ptr == NULL)
-			ptr = end_node;
-		return (*this);
-	}
-	tree_const_iterator operator++(int)
-	{
-		tree_const_iterator tmp(*this);
-		ptr = get_successor(ptr);
-		if (ptr == NULL)
-			ptr = end_node;
-		return (tmp);
-	}
-	tree_const_iterator &operator--()
-	{
-		if (ptr == end_node)
-			ptr = end_leaf_node;
-		else
-			ptr = get_predecessor(ptr);
-		if (ptr == NULL)
-			ptr = start_node;
-		return (*this);
-	}
-	tree_const_iterator operator--(int)
-	{
-		tree_const_iterator tmp(*this);
-		if (ptr == end_node)
-			ptr = end_leaf_node;
-		else
-			ptr = get_predecessor(ptr);
-		if (ptr == NULL)
-			ptr = start_node;
-		return (tmp);
-	}
-	bool operator==(const tree_const_iterator &other) const
-	{
-		return (ptr == other.ptr);
-		if (ptr == end_node)
-		{
-			if (other.ptr == other.end_node)
-				return (ptr == other.ptr);
-			return (false);
-		}
-		else
-		{
-			if (other.ptr == other.end_node)
-				return (false);
-			return (ptr == other.ptr);
-		}
-	}
-	bool operator!=(const tree_const_iterator &other) const
-	{
-		return (!(*this == other));
-	}
-private:
-	node_pointer ptr;
-	node_pointer start_node;
-	node_pointer end_node;
-	node_pointer end_leaf_node;
-};
 
 enum color_type
 {
@@ -230,11 +130,15 @@ public:
 	typedef typename node_type::value_type		value_type;
 	typedef typename node_type::pointer			pointer;
 	typedef typename node_type::reference		reference;
+	typedef ptrdiff_t							difference_type;
+	typedef bidirectional_iterator_tag			iterator_category;
 
 	node()
 		: base(), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
 	node(const value_type& item)
 		: base(item), color(RED), left_child(NULL), right_child(NULL), parent(NULL) { }
+	node(node_type b, color_type c, node *left, node *right, node *p)
+		: base(b), color(c), left_child(left), right_child(right), parent(p) { }
 	node(const node& other)
 		: base(other.base), color(other.color), left_child(other.left_child), right_child(other.right_child), parent(other.parent) { }
 	node& operator=(const node& other)
@@ -249,6 +153,7 @@ public:
 		}
 		return (*this);
 	}
+	operator node<const node_type>() const { return (node<const node_type>(base, color, left_child, right_child, parent)); }
 	~node() { }
 
 	node_type	base;
@@ -265,7 +170,9 @@ public:
 	typedef typename NodeContainer::key_type							key_type;
 	typedef typename NodeContainer::mapped_type							mapped_type;
 	typedef typename NodeContainer::value_type							value_type;
+	typedef typename NodeContainer::size_type							size_type;
 	typedef typename NodeContainer::key_compare							key_compare;
+	typedef typename NodeContainer::allocator_type						allocator_type;
 	typedef typename NodeContainer::reference							reference;
 	typedef typename NodeContainer::const_reference						const_reference;
 	typedef typename NodeContainer::pointer								pointer;
@@ -282,21 +189,25 @@ public:
 	typedef const node<base_node_type>*									node_const_pointer;
 	typedef node<base_node_type>&										node_reference;
 	typedef const node<base_node_type>&									node_const_reference;
+	typedef typename allocator_type::template rebind<node_type>::other	node_allocator_type;
 
-	typedef tree_iterator<node_type> 									iterator;
-	typedef tree_iterator<const node_type>								const_iterator;
+	typedef tree_iterator<node_pointer, value_type> 					iterator;
+	typedef tree_iterator<node_pointer, const value_type>				const_iterator;
 	typedef ft::reverse_iterator<iterator>								reverse_iterator;
-	typedef ft::reverse_iterator<const node_type>						const_reverse_iterator;
+	typedef ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
-	red_black_tree(void)
-		: root(NULL), begin_node(new node_type()), end_node(new node_type()) { }
+	red_black_tree()
+		: root(NULL), begin_node(new node_type()), end_node(new node_type())
+	{
+		// implement allocation with allocator
+	}
 	red_black_tree(const red_black_tree& other)
 		: root(NULL), begin_node(new node_type()), end_node(new node_type())
 	{
 		for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
 			insert(*c_it);
 	}
-	~red_black_tree(void)
+	~red_black_tree()
 	{
 		delete_from_node(root);
 		root = NULL;
@@ -319,16 +230,17 @@ public:
 
 	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
 	iterator		 end(void)	  { return (iterator		(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
-	reverse_iterator rbegin(void) { return (reverse_iterator(find_right_most_leaf(root), end_node, find_right_most_leaf(end_node), begin_node, find_left_most_leaf(root)));	}
-	reverse_iterator rend(void)	  { return (reverse_iterator(begin_node, end_node, find_right_most_leaf(end_node), begin_node, find_left_most_leaf(root)));					}
+	reverse_iterator rbegin(void) { return (reverse_iterator(iterator(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
+	reverse_iterator rend(void)	  { return (reverse_iterator(iterator(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
+	const_iterator		   begin(void) 	const { return (iterator		(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
+	const_iterator		   end(void) 	const { return (iterator		(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
+	const_reverse_iterator rbegin(void) const { return (reverse_iterator(iterator(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
+	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
 
-	const_iterator		   begin(void)	const { return (iterator		(find_left_most_leaf(root), begin_node, end_node, find_right_most_leaf(root))); }
-	const_iterator		   end(void)	const { return (iterator		(end_node, begin_node, end_node, find_right_most_leaf(root))); 					}
-	const_reverse_iterator rbegin(void) const { return (reverse_iterator(find_right_most_leaf(root), end_node, begin_node, find_left_most_leaf(root)));	}
-	const_reverse_iterator rend(void)	const { return (reverse_iterator(begin_node, end_node, begin_node, find_left_most_leaf(root)));					}
+	size_t max_size(void) const { return (allocator.max_size()); }
 
-	node_pointer		search(const key_type& key)		  { return (search_from_node(key, root, NodeContainer::compare)); }
-	node_const_pointer	search(const key_type& key) const { return (search_from_node(key, root, NodeContainer::compare)); }
+	node_pointer		search(const key_type& key)		  { return (search_from_node(key, root, compare)); }
+	node_const_pointer	search(const key_type& key) const { return (search_from_node(key, root, compare)); }
 	node_pointer 		insert(const value_type& item)
 	{
 
@@ -338,7 +250,7 @@ public:
 		while (x != NULL)
 		{
 			y = x;
-			if (NodeContainer::compare(z->base.getKey(), x->base.getKey()))
+			if (compare(z->base.getKey(), x->base.getKey()))
 				x = x->left_child;
 			else
 				x = x->right_child;
@@ -346,7 +258,7 @@ public:
 		z->parent = y;
 		if (y == NULL)
 			root = z;
-		else if (NodeContainer::compare(z->base.getKey(), y->base.getKey()))
+		else if (compare(z->base.getKey(), y->base.getKey()))
 			y->left_child = z;
 		else
 			y->right_child = z;
@@ -370,9 +282,11 @@ public:
 	// DEBUG
 	void print(void) const { print("", root, false); }
 private:
-	node_pointer	root;
-	node_pointer	begin_node;
-	node_pointer	end_node;
+	node_pointer		root;
+	node_pointer		begin_node;
+	node_pointer		end_node;
+	key_compare			compare;
+	node_allocator_type	allocator;
 
 	void	print(const std::string& prefix, node_pointer x, bool isLeft) const
 	{

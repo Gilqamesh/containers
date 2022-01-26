@@ -52,20 +52,31 @@ void PrintMemoryUsage()
 	std::cout << "Memory Usage: " << s_AllocationMetrics.CurrentUsage() << " bytes" << std::endl;
 }
 
-#define TESTED_NAMESPACE ft
+
+#define TESTED_NAMESPACE std
+
+template <typename Key, typename T>
+std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::map<Key, T>& m)
+{
+	for (typename TESTED_NAMESPACE::map<Key, T>::const_reverse_iterator i = m.rbegin(); i != m.rend(); ++i)
+		os << i->first << " " << i->second << std::endl;
+	return (os);
+}
 
 int main()
 {
 	PrintMemoryUsage();
 	{
 		TESTED_NAMESPACE::map<int, int> a;
+		LOG(a.max_size());
+		std::cout << a << std::endl;
 		a.insert(TESTED_NAMESPACE::make_pair<int, int>(3, 5));
 		a.insert(TESTED_NAMESPACE::make_pair<int, int>(4, 5));
 		a.insert(TESTED_NAMESPACE::make_pair<int, int>(7, 5));
 		a.insert(TESTED_NAMESPACE::make_pair<int, int>(-2, 5));
 
-		for (TESTED_NAMESPACE::map<int, int>::reverse_iterator i = a.rbegin(); i != a.rend(); ++i)
-			std::cout << i->first << std::endl;
+		std::cout << a << std::endl;
+		LOG(a.max_size());
 	}
 	PrintMemoryUsage();
 }

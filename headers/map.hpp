@@ -21,34 +21,35 @@ public:
 	typedef typename map::key_type					key_type;
 	typedef typename map::pointer					pointer;
 	typedef typename map::reference					reference;
+	typedef typename map::allocator_type			allocator_type;
 
 	map_node()
 	{
-		data = map::allocator.allocate(sizeof(value_type));
+		data = allocator.allocate(sizeof(value_type));
 	}
 	map_node(const map_node& other)
 	{
-		data = map::allocator.allocate(sizeof(value_type));
-		map::allocator.construct(data, value_type(*other.data));
+		data = allocator.allocate(sizeof(value_type));
+		allocator.construct(data, value_type(*other.data));
 	}
 	map_node(const value_type& item)
 	{
-		data = map::allocator.allocate(sizeof(value_type));
-		map::allocator.construct(data, value_type(item));
+		data = allocator.allocate(sizeof(value_type));
+		allocator.construct(data, value_type(item));
 	}
 	map_node& operator=(const map_node& other)
 	{
 		if (this != &other)
 		{
-			map::allocator.destroy(data);
-			map::allocator.construct(data, value_type(*other.data));
+			allocator.destroy(data);
+			allocator.construct(data, value_type(*other.data));
 		}
 		return (*this);
 	}
 	~map_node()
 	{
-		map::allocator.destroy(data);
-		map::allocator.deallocate(data, sizeof(value_type));
+		allocator.destroy(data);
+		allocator.deallocate(data, sizeof(value_type));
 	}
 
 	inline const key_type &getKey(void) const { return (data->first); }
@@ -56,6 +57,9 @@ public:
 	inline pointer getValue(void) { return (data); }
 
 	pointer			data;
+
+private:
+	allocator_type	allocator;
 };
 
 template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<const Key, T> > >
@@ -89,32 +93,21 @@ public:
 	map()
 		: tree() { } // tested
 	explicit map(const Compare& comp, const Allocator& alloc = Allocator()) // tested
-		: tree()
-	{
-		compare = comp;
-		allocator = alloc;
-	}
+		: tree(), allocator(alloc) { }
 	template <class InputIt> // tested
 	map(InputIt first, InputIt last, const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-		: tree()
+		: tree(), allocator(alloc)
 	{
-		compare = comp;
-		allocator = alloc;
 		while (first != last)
 			insert(*first++);
 	}
 	map(const map& other) // tested
-		: tree(other.tree)
-	{
-		compare = other.compare;
-		allocator = other.allocator;
-	}
+		: tree(other.tree), allocator(other.allocator) { }
 	~map() { }
 	map& operator=(const map& other) // tested
 	{
 		if (this != &other)
 		{
-			compare = other.compare;
 			allocator = other.allocator;
 			tree = other.tree;
 		}
@@ -150,26 +143,23 @@ public:
 	iterator 		 end(void)	  { return (tree.end());    } // tested
 	reverse_iterator rbegin(void) { return (tree.rbegin()); } // tested
 	reverse_iterator rend(void)   { return (tree.rend());   } // tested
+	const_iterator 		   begin(void)	const { return (tree.begin());	} // tested
+	const_iterator 		   end(void)	const { return (tree.end());	} // tested
+	const_reverse_iterator rbegin(void) const { return (tree.rbegin()); } // tested
+	const_reverse_iterator rend(void)	const { return (tree.rend());	} // tested
 
-	const_iterator 		   begin(void)	const { return (tree.begin());	}
-	const_iterator 		   end(void)	const { return (tree.end());	}
-	const_reverse_iterator rbegin(void) const { return (tree.rbegin()); }
-	const_reverse_iterator rend(void)	const { return (tree.rend());	}
+	// Capacity
+	bool empty(void) const { return (begin() == end()); } // tested
+	size_type size() const { return (ft::distance(begin(), end())); } // tested
+	size_type max_size() const { return (tree.max_size()); }
 
 	// DEBUG
 	reference insert(const value_type& item) { return (*tree.insert(item)->base.data); }
 	void	  print() const { tree.print(); }
 private:
-	red_black_tree<map>			tree;
-	static Compare				compare;
-	static Allocator			allocator;
+	red_black_tree<map>		tree;
+	allocator_type			allocator;
 };
-
-template <class Key, class T, class Compare, class Allocator>
-Compare map<Key, T, Compare, Allocator>::compare;
-
-template <class Key, class T, class Compare, class Allocator>
-Allocator map<Key, T, Compare, Allocator>::allocator;
 
 } // ft
 
