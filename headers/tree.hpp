@@ -23,16 +23,15 @@ public:
 	typedef typename iterator_traits<iterator_type>::reference				reference;
 	typedef typename iterator_traits<iterator_type>::iterator_category		iterator_category;
 
-	tree_iterator(NodePtr p, NodePtr start, NodePtr start_leaf, NodePtr end, NodePtr end_leaf)
-		: ptr(p == NULL ? end : p), start_node(start), start_leaf_node(start_leaf), end_node(end), end_leaf_node(end_leaf) { }
+	tree_iterator(NodePtr p, NodePtr start_leaf, NodePtr end, NodePtr end_leaf)
+		: ptr(p == NULL ? end : p), start_leaf_node(start_leaf), end_node(end), end_leaf_node(end_leaf) { }
 	tree_iterator(const tree_iterator& other)
-		: ptr(other.base()), start_node(other.start_node), start_leaf_node(other.start_leaf_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+		: ptr(other.base()), start_leaf_node(other.start_leaf_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
 	tree_iterator& operator=(const tree_iterator& other)
 	{
 		if (this != &other)
 		{
 			ptr = other.ptr;
-			start_node = other.start_node;
 			start_leaf_node = other.start_leaf_node;
 			end_node = other.end_node;
 			end_leaf_node = other.end_leaf_node;
@@ -40,17 +39,12 @@ public:
 		return (*this);
 	}
 	~tree_iterator() { }
-	operator tree_iterator<NodePtr, const T>() const { return (tree_iterator<NodePtr, const T>(ptr, start_node, start_leaf_node, end_node, end_leaf_node)); }
+	operator tree_iterator<NodePtr, const T>() const { return (tree_iterator<NodePtr, const T>(ptr, start_leaf_node, end_node, end_leaf_node)); }
 	tree_iterator &operator++()
 	{
-		if (ptr == start_node)
-			ptr = start_leaf_node;
-		else
-		{
-			ptr = get_successor(ptr);
-			if (ptr == NULL)
-				ptr = end_node;
-		}
+		ptr = get_successor(ptr);
+		if (ptr == NULL)
+			ptr = end_node;
 		return (*this);
 	}
 	tree_iterator operator++(int)
@@ -64,11 +58,7 @@ public:
 		if (ptr == end_node)
 			ptr = end_leaf_node;
 		else
-		{
-			ptr = get_predecessor(ptr);
-			if (ptr == NULL)
-				ptr = start_node;
-		}
+		ptr = get_predecessor(ptr);
 		return (*this);
 	}
 	tree_iterator operator--(int)
@@ -79,11 +69,11 @@ public:
 	}
 	reference operator*() const
 	{
-		return (*ptr->base.data);
+		return (ptr->base.data);
 	}
 	pointer operator->() const
 	{
-		return (ptr->base.data);
+		return (&ptr->base.data);
 	}
 	NodePtr base() const
 	{
@@ -92,10 +82,9 @@ public:
 
 private:
 	tree_iterator()
-		: ptr(NULL), start_node(NULL), start_leaf_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
+		: ptr(NULL), start_leaf_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
 	
 	NodePtr 	ptr;
-	NodePtr 	start_node;
 	NodePtr		start_leaf_node;
 	NodePtr 	end_node;
 	NodePtr 	end_leaf_node;
@@ -197,30 +186,32 @@ public:
 	typedef ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
 	red_black_tree()
-		: root(NULL), begin_node(new node_type()), end_node(new node_type())
+		: root(NULL), end_node(NULL)
 	{
-		// implement allocation with allocator
+		end_node = allocator.allocate(sizeof(*end_node));
+		allocator.construct(end_node, node_type());
 	}
 	red_black_tree(const red_black_tree& other)
-		: root(NULL), begin_node(new node_type()), end_node(new node_type())
+		: root(NULL), end_node(NULL)
 	{
+		end_node = allocator.allocate(sizeof(*end_node));
+		allocator.construct(end_node, node_type());
 		for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
 			insert(*c_it);
 	}
 	~red_black_tree()
 	{
-		delete_from_node(root);
+		delete_from_node(root, allocator);
+		allocator.destroy(end_node);
+		allocator.deallocate(end_node, sizeof(*end_node));
 		root = NULL;
-		delete begin_node;
-		begin_node = NULL;
-		delete end_node;
 		end_node = NULL;
 	}
 	red_black_tree& operator=(const red_black_tree& other)
 	{
 		if (this != &other)
 		{
-			delete_from_node(root);
+			delete_from_node(root, allocator);
 			root = NULL;
 			for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
 				insert(*c_it);
@@ -228,14 +219,14 @@ public:
 		return (*this);
 	}
 
-	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
-	iterator		 end(void)	  { return (iterator		(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
-	reverse_iterator rbegin(void) { return (reverse_iterator(iterator(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
-	reverse_iterator rend(void)	  { return (reverse_iterator(iterator(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
-	const_iterator		   begin(void) 	const { return (iterator		(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
-	const_iterator		   end(void) 	const { return (iterator		(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
-	const_reverse_iterator rbegin(void) const { return (reverse_iterator(iterator(end_node, begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
-	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), begin_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
+	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
+	iterator		 end(void)	  { return (iterator		(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
+	reverse_iterator rbegin(void) { return (reverse_iterator(iterator(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
+	reverse_iterator rend(void)	  { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
+	const_iterator		   begin(void) 	const { return (iterator		(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
+	const_iterator		   end(void) 	const { return (iterator		(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
+	const_reverse_iterator rbegin(void) const { return (reverse_iterator(iterator(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
+	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
 
 	size_t max_size(void) const { return (allocator.max_size()); }
 
@@ -243,8 +234,8 @@ public:
 	node_const_pointer	search(const key_type& key) const { return (search_from_node(key, root, compare)); }
 	node_pointer 		insert(const value_type& item)
 	{
-
-		node_pointer z = new node_type(item);
+		node_pointer z = allocator.allocate(sizeof(*z));
+		allocator.construct(z, node_type(item));
 		node_pointer y = NULL;
 		node_pointer x = root;
 		while (x != NULL)
@@ -276,14 +267,13 @@ public:
 		if (Node->color == BLACK)
 			delete_fixup(Node, &root);
 		
-		prune_leaf(Node);
+		prune_leaf(Node, allocator);
 	}
 
 	// DEBUG
 	void print(void) const { print("", root, false); }
 private:
 	node_pointer		root;
-	node_pointer		begin_node;
 	node_pointer		end_node;
 	key_compare			compare;
 	node_allocator_type	allocator;
@@ -419,16 +409,17 @@ void right_rotate(node_pointer x, node_pointer *root)
 	x->parent = y;
 }
 
-template <class node_pointer>
-void delete_from_node(node_pointer x)
+template <class node_pointer, class Allocator>
+void delete_from_node(node_pointer x, Allocator allocator)
 {
 	if (x == NULL)
 		return ;
 	if (x->left_child)
-		delete_from_node(x->left_child);
+		delete_from_node(x->left_child, allocator);
 	if (x->right_child)
-		delete_from_node(x->right_child);
-	delete x;
+		delete_from_node(x->right_child, allocator);
+	allocator.destroy(x);
+	allocator.deallocate(x, sizeof(*x));
 }
 
 template <class node_pointer>
@@ -597,8 +588,8 @@ node_pointer make_node_leaf(node_pointer Node)
 	}
 }
 
-template <class node_pointer>
-void	prune_leaf(node_pointer leaf)
+template <class node_pointer, class Allocator>
+void	prune_leaf(node_pointer leaf, Allocator allocator)
 {
 	if (leaf == NULL)
 		return ;
@@ -610,7 +601,8 @@ void	prune_leaf(node_pointer leaf)
 			leaf->parent->right_child = NULL;
 	}
 	std::cout << "Removing " << leaf->getKey() << std::endl;
-	delete leaf;
+	allocator.destroy(leaf);
+	allocator.deallocate(leaf, sizeof(*leaf));
 }
 
 } // ft

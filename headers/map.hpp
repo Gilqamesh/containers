@@ -21,45 +21,29 @@ public:
 	typedef typename map::key_type					key_type;
 	typedef typename map::pointer					pointer;
 	typedef typename map::reference					reference;
-	typedef typename map::allocator_type			allocator_type;
 
 	map_node()
-	{
-		data = allocator.allocate(sizeof(value_type));
-	}
+		: data() { }
 	map_node(const map_node& other)
-	{
-		data = allocator.allocate(sizeof(value_type));
-		allocator.construct(data, value_type(*other.data));
-	}
+		: data(other.data) { }
 	map_node(const value_type& item)
-	{
-		data = allocator.allocate(sizeof(value_type));
-		allocator.construct(data, value_type(item));
-	}
+		: data(item) { }
 	map_node& operator=(const map_node& other)
 	{
 		if (this != &other)
 		{
-			allocator.destroy(data);
-			allocator.construct(data, value_type(*other.data));
+			data = other.data;
 		}
 		return (*this);
 	}
-	~map_node()
-	{
-		allocator.destroy(data);
-		allocator.deallocate(data, sizeof(value_type));
-	}
+	~map_node() { }
 
-	inline const key_type &getKey(void) const { return (data->first); }
+	const key_type &getKey(void) const { return (data.first); }
 	void swap(map_node& n1, map_node& n2) { ft::swap(n1, n2); }
-	inline pointer getValue(void) { return (data); }
 
-	pointer			data;
+	value_type		data;
 
 private:
-	allocator_type	allocator;
 };
 
 template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<const Key, T> > >
@@ -154,7 +138,7 @@ public:
 	size_type max_size() const { return (tree.max_size()); }
 
 	// DEBUG
-	reference insert(const value_type& item) { return (*tree.insert(item)->base.data); }
+	reference insert(const value_type& item) { return (tree.insert(item)->base.data); }
 	void	  print() const { tree.print(); }
 private:
 	red_black_tree<map>		tree;
