@@ -212,7 +212,6 @@ public:
 		if (this != &other)
 		{
 			delete_from_node(root, allocator);
-			root = NULL;
 			for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
 				insert(*c_it);
 		}
@@ -229,6 +228,7 @@ public:
 	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
 
 	size_t max_size(void) const { return (allocator.max_size()); }
+	iterator get_iterator_at(node_pointer p) { return (iterator(p, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); }
 
 	node_pointer		search(const key_type& key)		  { return (search_from_node(key, root, compare)); }
 	node_const_pointer	search(const key_type& key) const { return (search_from_node(key, root, compare)); }
@@ -253,7 +253,7 @@ public:
 			y->left_child = z;
 		else
 			y->right_child = z;
-		insert_fixup(z, &root);
+		insert_fixup(z, root);
 		return (z);
 	}
 	void 			remove(const key_type& key)
@@ -265,10 +265,11 @@ public:
 		Node = make_node_leaf(Node);
 
 		if (Node->color == BLACK)
-			delete_fixup(Node, &root);
+			delete_fixup(Node, root);
 		
 		prune_leaf(Node, allocator);
 	}
+	void clear(void) { delete_from_node(root, allocator); }
 
 	// DEBUG
 	void print(void) const { print("", root, false); }
@@ -315,11 +316,11 @@ node_pointer search_from_node(const key_type& key, node_pointer x, key_compare c
 }
 
 template <class node_pointer>
-void insert_fixup(node_pointer z, node_pointer *root)
+void insert_fixup(node_pointer z, node_pointer &root)
 {
 	if (z == NULL)
 		return ;
-	while (z != *root && z->parent->color == RED)
+	while (z != root && z->parent->color == RED)
 	{
 		if (z->parent == z->parent->parent->left_child)
 		{
@@ -366,11 +367,11 @@ void insert_fixup(node_pointer z, node_pointer *root)
 			}
 		}
 	}
-	(*root)->color = BLACK;
+	root->color = BLACK;
 }
 
 template <class node_pointer>
-void left_rotate(node_pointer x, node_pointer *root)
+void left_rotate(node_pointer x, node_pointer &root)
 {
 	if (x == NULL)
 		return ;
@@ -380,7 +381,7 @@ void left_rotate(node_pointer x, node_pointer *root)
 		y->left_child->parent = x;
 	y->parent = x->parent;
 	if (x->parent == NULL)
-		*root = y;
+		root = y;
 	else if (x == x->parent->left_child)
 		x->parent->left_child = y;
 	else
@@ -390,7 +391,7 @@ void left_rotate(node_pointer x, node_pointer *root)
 }
 
 template <class node_pointer>
-void right_rotate(node_pointer x, node_pointer *root)
+void right_rotate(node_pointer x, node_pointer root)
 {
 	if (x == NULL)
 		return ;
@@ -400,7 +401,7 @@ void right_rotate(node_pointer x, node_pointer *root)
 		y->right_child->parent = x;
 	y->parent = x->parent;
 	if (x->parent == NULL)
-		*root = y;
+		root = y;
 	else if (x == x->parent->left_child)
 		x->parent->left_child = y;
 	else
@@ -410,7 +411,7 @@ void right_rotate(node_pointer x, node_pointer *root)
 }
 
 template <class node_pointer, class Allocator>
-void delete_from_node(node_pointer x, Allocator allocator)
+void delete_from_node(node_pointer &x, Allocator allocator)
 {
 	if (x == NULL)
 		return ;
@@ -420,14 +421,15 @@ void delete_from_node(node_pointer x, Allocator allocator)
 		delete_from_node(x->right_child, allocator);
 	allocator.destroy(x);
 	allocator.deallocate(x, sizeof(*x));
+	x = NULL;
 }
 
 template <class node_pointer>
-void delete_fixup(node_pointer x, node_pointer *root)
+void delete_fixup(node_pointer x, node_pointer &root)
 {
 	if (x == NULL)
 		return ;
-	while (x != *root && x->color == BLACK)
+	while (x != root && x->color == BLACK)
 	{
 		if (sibling(x) && sibling(x)->color == RED)
 		{
@@ -441,7 +443,7 @@ void delete_fixup(node_pointer x, node_pointer *root)
 			x->parent->color = BLACK;
 			nephew(x)->color = BLACK;
 			rotate_to_parent(sibling(x), root);
-			x = *root;
+			x = root;
 			break ;
 		}
 		else if (niece(x) && niece(x)->color == RED)
@@ -545,7 +547,7 @@ node_pointer nephew(node_pointer Node)
 }
 
 template <class node_pointer>
-void	rotate_to_parent(node_pointer Node, node_pointer *root)
+void	rotate_to_parent(node_pointer Node, node_pointer &root)
 {
 	if (Node == NULL)
 		return ;

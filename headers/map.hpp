@@ -123,22 +123,30 @@ public:
 	}
 
 	// Iterators
-	iterator 		 begin(void)  { return (tree.begin());  } // tested
-	iterator 		 end(void)	  { return (tree.end());    } // tested
-	reverse_iterator rbegin(void) { return (tree.rbegin()); } // tested
-	reverse_iterator rend(void)   { return (tree.rend());   } // tested
-	const_iterator 		   begin(void)	const { return (tree.begin());	} // tested
-	const_iterator 		   end(void)	const { return (tree.end());	} // tested
-	const_reverse_iterator rbegin(void) const { return (tree.rbegin()); } // tested
-	const_reverse_iterator rend(void)	const { return (tree.rend());	} // tested
+	iterator 		 begin()  { return (tree.begin());  } // tested
+	iterator 		 end()	  { return (tree.end());    } // tested
+	reverse_iterator rbegin() { return (tree.rbegin()); } // tested
+	reverse_iterator rend()   { return (tree.rend());   } // tested
+	const_iterator 		   begin()	const { return (tree.begin());	} // tested
+	const_iterator 		   end()	const { return (tree.end());	} // tested
+	const_reverse_iterator rbegin() const { return (tree.rbegin()); } // tested
+	const_reverse_iterator rend()	const { return (tree.rend());	} // tested
 
 	// Capacity
-	bool empty(void) const { return (begin() == end()); } // tested
+	bool empty() const { return (begin() == end()); } // tested
 	size_type size() const { return (ft::distance(begin(), end())); } // tested
-	size_type max_size() const { return (tree.max_size()); }
+	size_type max_size() const { return (tree.max_size()); } // tested
+
+	// Modifiers
+	void clear() { tree.clear(); } // tested
+	ft::pair<iterator, bool> insert(const value_type& value)
+	{
+		ft::pair<iterator, bool> result(ft::make_pair<iterator, bool>(tree.get_iterator_at(tree.insert(value)), false));
+		result.second = (result.first == end() ? false : true);
+		return (result);
+	}
 
 	// DEBUG
-	reference insert(const value_type& item) { return (tree.insert(item)->base.data); }
 	void	  print() const { tree.print(); }
 private:
 	red_black_tree<map>		tree;
