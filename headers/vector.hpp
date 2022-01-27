@@ -136,7 +136,7 @@ public:
 		finish = start + count;
 		end_of_storage = finish;
 		for (size_type i = 0; i < count; ++i)
-			allocator.construct(start.operator->() + i, value);
+			allocator.construct(start.base() + i, value);
 	}
 	template <typename InputIt> // tested
 	vector(InputIt first, InputIt last, const Allocator& alloc = Allocator(),
@@ -148,7 +148,7 @@ public:
 		finish = start + dist;
 		end_of_storage = finish;
 		for (difference_type i = 0; i < dist; ++i)
-			allocator.construct(start.operator->() + i, *first++);
+			allocator.construct(start.base() + i, *first++);
 	}
 	vector(const vector& other) // tested
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator(other.allocator)
@@ -157,13 +157,13 @@ public:
 		finish = start + (other.finish - other.start);
 		end_of_storage = finish;
 		for (difference_type i = 0; i < finish - start; ++i)
-			allocator.construct(start.operator->() + i, *(other.start + i));
+			allocator.construct(start.base() + i, *(other.start + i));
 	}
 	~vector() // tested
 	{
 		for (difference_type i = 0; i < finish - start; ++i)
-			allocator.destroy(start.operator->() + i);
-		allocator.deallocate(start.operator->(), capacity());
+			allocator.destroy(start.base() + i);
+		allocator.deallocate(start.base(), capacity());
 		start = NULL;
 		finish = NULL;
 		end_of_storage = NULL;
@@ -173,32 +173,32 @@ public:
 		if (this != &other)
 		{
 			for (size_type i = 0; i < size(); ++i)
-				allocator.destroy(start.operator->() + i);
+				allocator.destroy(start.base() + i);
 			if (other.size() > capacity())
 			{
-				allocator.deallocate(start.operator->(), capacity());
+				allocator.deallocate(start.base(), capacity());
 				start = allocator.allocate(other.size());
 				end_of_storage = start + other.size();
 			}
 			finish = start + other.size();
 			for (difference_type i = 0; i < finish - start; ++i)
-				allocator.construct(start.operator->() + i, *(other.start + i));
+				allocator.construct(start.base() + i, *(other.start + i));
 		}
 		return (*this);
 	}
 	void assign(size_type count, const T& value) // tested
 	{
 		for (size_type i = 0; i < size(); ++i)
-			allocator.destroy(start.operator->() + i);
+			allocator.destroy(start.base() + i);
 		if (count > capacity())
 		{
-			allocator.deallocate(start.operator->(), capacity());
+			allocator.deallocate(start.base(), capacity());
 			start = allocator.allocate(count);
 			end_of_storage = start + count;
 		}
 		finish = start + count;
 		for (size_type i = 0; i < count; ++i)
-			allocator.construct(start.operator->() + i, value);
+			allocator.construct(start.base() + i, value);
 	}
 	template <typename InputIt> // tested
 	void assign(InputIt first, InputIt last,
@@ -206,16 +206,16 @@ public:
 	{
 		difference_type dist = ft::distance(first, last);
 		for (size_type i = 0; i < size(); ++i)
-			allocator.destroy(start.operator->() + i);
+			allocator.destroy(start.base() + i);
 		if (static_cast<size_type>(dist) > capacity())
 		{
-			allocator.deallocate(start.operator->(), capacity());
+			allocator.deallocate(start.base(), capacity());
 			start = allocator.allocate(dist);
 			end_of_storage = start + dist;
 		}
 		finish = start + dist;
 		for (difference_type i = 0; i < dist; ++i)
-			allocator.construct(start.operator->() + i, *first++);
+			allocator.construct(start.base() + i, *first++);
 	}
 	allocator_type get_allocator(void) const { return (allocator); } // tested
 
@@ -263,10 +263,11 @@ public:
 		{
 			iterator newStart = allocator.allocate(new_cap);
 			for (size_type i = 0; i < size(); ++i)
-				allocator.construct(newStart.operator->() + i, *(start + i));
+				allocator.construct(newStart.base() + i, *(start + i));
 			for (size_type i = 0; i < size(); ++i)
-				allocator.destroy(start.operator->() + i);
-			allocator.deallocate(start.operator->(), capacity());
+				allocator.destroy(start.base() + i);
+			if (capacity() > 0)
+				allocator.deallocate(start.base(), capacity());
 			finish = newStart + size();
 			start = newStart;
 			end_of_storage = newStart + new_cap;
@@ -283,11 +284,11 @@ public:
 			reserve(std::max(size() * 2, static_cast<size_type>(1)));
 		if (offset == finish - start)
 		{
-			allocator.construct(finish.operator->(), value);
+			allocator.construct(finish.base(), value);
 			++finish;
 			return (start + offset);
 		}
-		allocator.construct(finish.operator->(), *(finish - 1));
+		allocator.construct(finish.base(), *(finish - 1));
 		for (iterator i = finish - 1; i != start + offset; --i)
 			*i = *(i - 1);
 		*(start + offset) = value;
@@ -300,7 +301,7 @@ public:
 		if (size() + count > capacity())
 			reserve(std::max(size() * 2, size() + count));
 		for (iterator i = finish + count - 1; i != finish - 1; --i)
-			allocator.construct(i.operator->(), *(i - count));		
+			allocator.construct(i.base(), *(i - count));		
 		for (iterator i = finish - 1; i > start + offset + count - 1; --i)
 			*i = *(i - count);
 		for (iterator i = start + offset; i != start + offset + count; ++i)
@@ -316,7 +317,7 @@ public:
 		if (size() + static_cast<size_type>(dist) > capacity())
 			reserve(std::max(size() * 2, size() + static_cast<size_type>(dist)));
 		for (iterator i = finish + dist - 1; i != finish - 1; --i)
-			allocator.construct(i.operator->(), *(i - dist));
+			allocator.construct(i.base(), *(i - dist));
 		for (iterator i = finish - 1; i > start + offset + dist - 1; --i)
 			*i = *(i - dist);
 		for (difference_type i = 0; i < dist; ++i)
@@ -327,7 +328,7 @@ public:
 	{
 		for (iterator i = pos; i != finish - 1; ++i)
 			*i = *(i + 1);
-		allocator.destroy(finish.operator->() - 1);
+		allocator.destroy(finish.base() - 1);
 		finish = finish - 1;
 		return (pos);
 	}
@@ -336,7 +337,7 @@ public:
 		for (difference_type i = 0; i < finish - last; ++i)
 			*(first + i) = *(last + i);
 		for (iterator i = first + (finish - last); i != finish; ++i)
-			allocator.destroy(i.operator->());
+			allocator.destroy(i.base());
 		finish = first + (finish - last);
 		return (first); // wrong return
 	}
@@ -344,12 +345,12 @@ public:
 	{
 		if (size() + 1 > capacity())
 			reserve(std::max(size() * 2, static_cast<size_type>(1)));
-		allocator.construct(finish.operator->(), value);
+		allocator.construct(finish.base(), value);
 		finish = finish + 1;
 	}
 	void		pop_back(void) // tested
 	{
-		allocator.destroy(finish.operator->() - 1);
+		allocator.destroy(finish.base() - 1);
 		finish = finish - 1;
 	}
 	void		resize(size_type count, T value = T()) // tested

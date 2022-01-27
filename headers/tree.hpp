@@ -6,7 +6,9 @@
 # include "utility.hpp"
 # include "iterator.hpp"
 # include <string>
+
 # include <iostream>
+# define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
 
 namespace ft
 {
@@ -23,6 +25,8 @@ public:
 	typedef typename iterator_traits<iterator_type>::reference				reference;
 	typedef typename iterator_traits<iterator_type>::iterator_category		iterator_category;
 
+	tree_iterator()
+		: ptr(NULL), start_leaf_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
 	tree_iterator(NodePtr p, NodePtr start_leaf, NodePtr end, NodePtr end_leaf)
 		: ptr(p == NULL ? end : p), start_leaf_node(start_leaf), end_node(end), end_leaf_node(end_leaf) { }
 	tree_iterator(const tree_iterator& other)
@@ -58,7 +62,7 @@ public:
 		if (ptr == end_node)
 			ptr = end_leaf_node;
 		else
-		ptr = get_predecessor(ptr);
+			ptr = get_predecessor(ptr);
 		return (*this);
 	}
 	tree_iterator operator--(int)
@@ -81,9 +85,6 @@ public:
 	}
 
 private:
-	tree_iterator()
-		: ptr(NULL), start_leaf_node(NULL), end_node(NULL), end_leaf_node(NULL) { }
-	
 	NodePtr 	ptr;
 	NodePtr		start_leaf_node;
 	NodePtr 	end_node;
@@ -228,10 +229,9 @@ public:
 	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
 
 	size_t max_size(void) const { return (allocator.max_size()); }
-	iterator get_iterator_at(node_pointer p) { return (iterator(p, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); }
+	iterator get_iterator_at(node_pointer p) const { return (iterator(p, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); }
 
-	node_pointer		search(const key_type& key)		  { return (search_from_node(key, root, compare)); }
-	node_const_pointer	search(const key_type& key) const { return (search_from_node(key, root, compare)); }
+	node_pointer		search(const key_type& key)	const { return (search_from_node(key, root, compare)); }
 	node_pointer 		insert(const value_type& item)
 	{
 		node_pointer z = allocator.allocate(sizeof(*z));
@@ -256,16 +256,100 @@ public:
 		insert_fixup(z, root);
 		return (z);
 	}
+	node_pointer 		insert(iterator hint, const value_type& item)
+	{
+		node_pointer z = allocator.allocate(sizeof(*z));
+		allocator.construct(z, node_type(item));
+		node_pointer y = NULL;
+		node_pointer x = hint.base();
+		while (x != NULL)
+		{
+			y = x;
+			if (compare(z->base.getKey(), x->base.getKey()))
+				x = x->left_child;
+			else
+				x = x->right_child;
+		}
+		z->parent = y;
+		if (y == NULL)
+			root = z;
+		else if (compare(z->base.getKey(), y->base.getKey()))
+			y->left_child = z;
+		else
+			y->right_child = z;
+		insert_fixup(z, root);
+		return (z);
+	}
 	void 			remove(const key_type& key)
 	{
-		node_pointer Node = search(key, root);
+		node_pointer Node = search(key);
 		if (Node == NULL)
 			return ;
 		
-		Node = make_node_leaf(Node);
-
-		if (Node->color == BLACK)
-			delete_fixup(Node, root);
+		if (Node->left_child == NULL && Node->right_child == NULL)
+		{
+			if (Node->parent)
+			{
+				if (Node->parent->left_child == Node)
+					Node->parent->left_child = NULL;
+				else
+					Node->parent->right_child = NULL;
+			}
+			if (Node->color == BLACK)
+				delete_fixup(Node->parent, root);
+			if (Node->parent == NULL)
+				root = NULL;
+		}
+		else if (has_one_child(Node)) // Node is black cause red cant have exactly 1 child
+		{
+			// shift the child up and change its color to black
+			node_pointer child = has_one_child(Node);
+			node_pointer parent = Node->parent;
+			if (Node->parent) // if Node is not root
+			{
+				if (Node == parent->left_child)
+					parent->left_child = child;
+				else
+					parent->right_child = child;
+			}
+			else
+				root = child;
+			child->parent = parent;
+			child->color = BLACK;
+		}
+		else
+		{
+			// swap with successor
+			node_pointer successor = get_successor(Node);
+			swap_nodes(Node, successor, root);
+			if (Node->color == BLACK)
+			{
+				node_pointer child = has_one_child(Node);
+				if (child) // shift the child to this node
+					child->parent = Node->parent;
+				if (Node->parent)
+				{
+					if (Node->parent->left_child == Node)
+						Node->parent->left_child = child;
+					else
+						Node->parent->right_child = child;
+				}
+				if (child)
+					delete_fixup(child, root);
+				else
+					delete_fixup(Node->parent, root);
+			}
+			else 
+			{
+				if (Node->parent)
+				{
+					if (Node->parent->left_child == Node)
+						Node->parent->left_child = NULL;
+					else
+						Node->parent->right_child = NULL;
+				}
+			}
+		}
 		
 		prune_leaf(Node, allocator);
 	}
@@ -291,6 +375,91 @@ private:
 		}
 	}
 };
+
+// swaps the references but not the data
+template <class node_pointer>
+void swap_nodes(node_pointer node1, node_pointer node2, node_pointer &root)
+{
+	ft::swap(node1->color, node2->color);
+	if (node1->parent == node2 || node2->parent == node1) // one is the other's parent
+	{
+		if (node1->parent == node2) // so that 1 is 2's parent
+			ft::swap(node1, node2);
+		node_pointer three = node2->left_child;
+		node_pointer four = node2->right_child;
+		node_pointer five = node1->parent;
+		bool isNode2LeftChild = (node1->left_child == node2);
+		node_pointer six = (isNode2LeftChild ? node1->right_child : node1->left_child);
+		if (five)
+		{
+			if (five->left_child == node1)
+				five->left_child = node2;
+			else
+				five->right_child = node2;
+		}
+		else
+			root = node2;
+		node2->parent = five;
+		if (isNode2LeftChild)
+		{
+			node2->left_child = node1;
+			node2->right_child = six;
+		}
+		else
+		{
+			node2->left_child = six;
+			node2->right_child = node1;
+		}
+		node1->parent = node2;
+		node1->left_child = three;
+		node1->right_child = four;
+		if (three)
+			three->parent = node1;
+		if (four)
+			four->parent = node1;
+		if (six)
+			six->parent = node2;
+	}
+	else
+	{
+		node_pointer three = node2->left_child;
+		node_pointer four = node2->right_child;
+		node_pointer eight = node2->parent;
+		node_pointer seven = node1->left_child;
+		node_pointer six = node1->right_child;
+		node_pointer five = node1->parent;
+		node1->left_child = three;
+		node1->right_child = four;
+		node1->parent = eight;
+		node2->left_child = seven;
+		node2->right_child = six;
+		node2->parent = five;
+		if (three)
+			three->parent = node1;
+		if (four)
+			four->parent = node1;
+		if (eight)
+		{
+			if (eight->left_child == node2)
+				eight->left_child = node1;
+			else
+				eight->right_child = node1;
+		}
+		if (seven)
+			seven->parent = node2;
+		if (six)
+			six->parent = node2;
+		if (five)
+		{
+			if (five->left_child == node1)
+				five->left_child = node2;
+			else
+				five->right_child = node2;
+		}
+		else
+			root = node2;
+	}
+}
 
 template <class node_pointer>
 node_pointer getRoot(node_pointer a)
@@ -391,7 +560,7 @@ void left_rotate(node_pointer x, node_pointer &root)
 }
 
 template <class node_pointer>
-void right_rotate(node_pointer x, node_pointer root)
+void right_rotate(node_pointer x, node_pointer &root)
 {
 	if (x == NULL)
 		return ;
@@ -569,40 +738,14 @@ node_pointer has_one_child(node_pointer Node)
 	return (NULL);
 }
 
-template <class node_pointer>
-node_pointer make_node_leaf(node_pointer Node)
-{
-	if (Node == NULL)
-		return (NULL);
-	if (Node->left_child == NULL && Node->right_child == NULL)
-		return (Node);
-	if (has_one_child(Node))
-	{
-		Node->swap(*Node, *has_one_child(Node));
-		Node = has_one_child(Node);
-		return (make_node_leaf(Node));
-	}
-	else
-	{
-		Node->swap(*Node, *get_predecessor(Node));
-		Node = get_predecessor(Node);
-		return (make_node_leaf(Node));
-	}
-}
-
 template <class node_pointer, class Allocator>
 void	prune_leaf(node_pointer leaf, Allocator allocator)
 {
 	if (leaf == NULL)
 		return ;
-	if (leaf->parent)
-	{
-		if (leaf == leaf->parent->left_child)
-			leaf->parent->left_child = NULL;
-		else
-			leaf->parent->right_child = NULL;
-	}
-	std::cout << "Removing " << leaf->getKey() << std::endl;
+	#ifndef NDEBUG
+		std::cout << "Removing " << leaf->base.getKey() << std::endl;
+	#endif
 	allocator.destroy(leaf);
 	allocator.deallocate(leaf, sizeof(*leaf));
 }

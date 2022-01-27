@@ -39,7 +39,6 @@ public:
 	~map_node() { }
 
 	const key_type &getKey(void) const { return (data.first); }
-	void swap(map_node& n1, map_node& n2) { ft::swap(n1, n2); }
 
 	value_type		data;
 
@@ -74,19 +73,45 @@ public:
 	typedef typename red_black_tree<map>::reverse_iterator 				reverse_iterator;
 	typedef typename red_black_tree<map>::const_reverse_iterator 		const_reverse_iterator;
 
+	class value_compare
+	{
+	public:
+		value_compare()
+			: compare() { }
+		value_compare(Compare c)
+			: compare(c) { }
+		value_compare(const value_compare& other)
+			: compare (other.compare) { }
+		value_compare &operator=(const value_compare& other)
+		{
+			if (this != &other)
+			{
+				compare = other.compare;
+			}
+			return (*this);
+		}
+		~value_compare() { }
+		bool operator()(const value_type& lhs, const value_type& rhs) const
+		{
+			return (compare(lhs.first, rhs.second));
+		}
+	private:
+		Compare compare;
+	};
+
 	map()
 		: tree() { } // tested
 	explicit map(const Compare& comp, const Allocator& alloc = Allocator()) // tested
-		: tree(), allocator(alloc) { }
+		: tree(), allocator(alloc), compare(comp) { }
 	template <class InputIt> // tested
 	map(InputIt first, InputIt last, const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-		: tree(), allocator(alloc)
+		: tree(), allocator(alloc), compare(comp)
 	{
 		while (first != last)
 			insert(*first++);
 	}
 	map(const map& other) // tested
-		: tree(other.tree), allocator(other.allocator) { }
+		: tree(other.tree), allocator(other.allocator), compare(other.compare) { }
 	~map() { }
 	map& operator=(const map& other) // tested
 	{
@@ -94,6 +119,7 @@ public:
 		{
 			allocator = other.allocator;
 			tree = other.tree;
+			compare = other.compare;
 		}
 		return (*this);
 	}
@@ -105,21 +131,21 @@ public:
 		node<base_node_type> *p = tree.search(key);
 		if (p == NULL)
 			throw std::out_of_range("The key is not in the map");
-		return (p->base.data->second);
+		return (p->base.data.second);
 	}
 	const T& at(const Key& key) const // tested
 	{
 		const node<base_node_type> *p = tree.search(key);
 		if (p == NULL)
 			throw std::out_of_range("The key is not in the map");
-		return (p->base.data->second);
+		return (p->base.data.second);
 	}
 	T& operator[](const Key& key) // tested
 	{
 		node<base_node_type> *p = tree.search(key);
 		if (p == NULL)
-			return (insert(ft::make_pair<const Key, T>(key, T())).second);
-		return (p->base.data->second);
+			return (insert(ft::make_pair<const Key, T>(key, T())).first->second);
+		return (p->base.data.second);
 	}
 
 	// Iterators
@@ -139,18 +165,105 @@ public:
 
 	// Modifiers
 	void clear() { tree.clear(); } // tested
-	ft::pair<iterator, bool> insert(const value_type& value)
+	ft::pair<iterator, bool> insert(const value_type& value) // tested
 	{
+		iterator ret = find(value.first);
+		if (ret != end())
+			return (ft::make_pair<iterator, bool>(ret, false));
 		ft::pair<iterator, bool> result(ft::make_pair<iterator, bool>(tree.get_iterator_at(tree.insert(value)), false));
 		result.second = (result.first == end() ? false : true);
 		return (result);
 	}
+	iterator insert(iterator hint, const value_type& value) // tested
+	{
+		iterator ret = find(value.first);
+		if (ret != end())
+			return (ret);
+		return (tree.get_iterator_at(tree.insert(hint, value)));
+	}
+	template <class InputIt>
+	void insert(InputIt first, InputIt last) // tested
+	{
+		while (first != last)
+			insert(*first++);
+	}
+	void erase(iterator pos) // tested
+	{
+		tree.remove(pos->first);
+	}
+	void erase(iterator first, iterator last) // tested
+	{
+		while (first != last)
+		{
+			iterator cur = first++;
+			tree.remove(cur->first);
+		}
+	}
+	size_type erase(const Key& key) // tested
+	{
+		iterator i = find(key);
+		size_type ret = (i == end() ? 0 : 1);
+		erase(i);
+		return (ret);
+	}
+	void swap(map& other) // tested
+	{
+		ft::swap(tree, other.tree);
+		ft::swap(allocator, other.allocator);
+	}
+
+	// Lookup
+	size_type count(const Key& key) const { return (find(key) == end() ? 0 : 1); } // tested
+	iterator find(const Key& key) { return (tree.get_iterator_at(tree.search(key))); } // tested
+	const_iterator find(const Key& key) const { return (tree.get_iterator_at(tree.search(key))); } // tested
+	ft::pair<iterator, iterator> equal_range(const Key& key) // tested
+	{
+		return (ft::make_pair<iterator, iterator>(lower_bound(key), upper_bound(key)));
+	}
+	ft::pair<const_iterator, const_iterator> equal_range(const Key& key) const // tested
+	{
+		return (ft::make_pair<const_iterator, const_iterator>(lower_bound(key), upper_bound(key)));
+	}
+	iterator lower_bound(const Key& key) // tested
+	{
+		iterator i = begin();
+		while (i != end() && i->first < key)
+			++i;
+		return (i);
+	}
+	const_iterator lower_bound(const Key& key) const // tested
+	{
+		const_iterator ci = begin();
+		while (ci != end() && ci->first < key)
+			++ci;
+		return (ci);
+	}
+	iterator upper_bound(const Key& key) // tested
+	{
+		iterator i = begin();
+		while (i != end() && i->first <= key)
+			++i;
+		return (i);
+	}
+	const_iterator upper_bound(const Key& key) const // tested
+	{
+		const_iterator ci = begin();
+		while (ci != end() && ci->first <= key)
+			++ci;
+		return (ci);
+	}
+
+public:
+	// Observers
+	key_compare key_comp() const { return (key_compare()); }
+	value_compare value_comp() const { return (compare); }
 
 	// DEBUG
 	void	  print() const { tree.print(); }
 private:
 	red_black_tree<map>		tree;
 	allocator_type			allocator;
+	value_compare			compare;
 };
 
 } // ft
