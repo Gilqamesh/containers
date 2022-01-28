@@ -30,7 +30,7 @@ public:
 	tree_iterator(NodePtr p, NodePtr start_leaf, NodePtr end, NodePtr end_leaf)
 		: ptr(p == NULL ? end : p), start_leaf_node(start_leaf), end_node(end), end_leaf_node(end_leaf) { }
 	tree_iterator(const tree_iterator& other)
-		: ptr(other.base()), start_leaf_node(other.start_leaf_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
+		: ptr(other.ptr), start_leaf_node(other.start_leaf_node), end_node(other.end_node), end_leaf_node(other.end_leaf_node) { }
 	tree_iterator& operator=(const tree_iterator& other)
 	{
 		if (this != &other)
@@ -186,27 +186,43 @@ public:
 	typedef ft::reverse_iterator<iterator>								reverse_iterator;
 	typedef ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
+/*
+	node_pointer		root;
+	node_pointer		end_node;
+	key_compare			compare;
+	node_allocator_type	allocator;
+	// keeping track of these values would increase efficiency
+	node_pointer		left_most_leaf;
+	node_pointer		right_most_leaf;
+*/
 	red_black_tree()
-		: root(NULL), end_node(NULL)
+		: root(NULL), end_node(NULL), compare(), allocator(), left_most_leaf(NULL), right_most_leaf(NULL)
 	{
 		end_node = allocator.allocate(sizeof(*end_node));
 		allocator.construct(end_node, node_type());
 	}
 	red_black_tree(const red_black_tree& other)
-		: root(NULL), end_node(NULL)
+		: root(NULL), end_node(NULL), compare(other.compare), allocator(other.allocator), left_most_leaf(NULL), right_most_leaf(NULL)
 	{
 		end_node = allocator.allocate(sizeof(*end_node));
 		allocator.construct(end_node, node_type());
 		for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
-			insert(*c_it);
+			insert(*c_it, c_it.base()->base.getKey());
+		left_most_leaf = find_left_most_leaf(root);
+		right_most_leaf = find_right_most_leaf(root);
 	}
 	~red_black_tree()
 	{
 		delete_from_node(root, allocator);
-		allocator.destroy(end_node);
-		allocator.deallocate(end_node, sizeof(*end_node));
+		if (end_node)
+		{
+			allocator.destroy(end_node);
+			allocator.deallocate(end_node, sizeof(*end_node));
+		}
 		root = NULL;
 		end_node = NULL;
+		left_most_leaf = NULL;
+		right_most_leaf = NULL;
 	}
 	red_black_tree& operator=(const red_black_tree& other)
 	{
@@ -214,9 +230,33 @@ public:
 		{
 			delete_from_node(root, allocator);
 			for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
-				insert(*c_it);
+				insert(*c_it, c_it.base()->base.getKey());
+			left_most_leaf = find_left_most_leaf(root);
+			right_most_leaf = find_right_most_leaf(root);
 		}
 		return (*this);
+	}
+
+	void swap(red_black_tree& other)
+	{
+		node_pointer tmp_root = root;
+		node_pointer tmp_end_node = end_node;
+		key_compare tmp_compare = other.compare;
+		node_allocator_type tmp_allocator = other.allocator;
+		node_pointer tmp_left_most = left_most_leaf;
+		node_pointer tmp_right_most = right_most_leaf;
+		root = other.root;
+		end_node = other.end_node;
+		compare = other.compare;
+		allocator = other.allocator;
+		left_most_leaf = other.left_most_leaf;
+		right_most_leaf = other.right_most_leaf;
+		other.root = tmp_root;
+		other.end_node = tmp_end_node;
+		other.compare = tmp_compare;
+		other.allocator = tmp_allocator;
+		other.left_most_leaf = tmp_left_most;
+		other.right_most_leaf = tmp_right_most;
 	}
 
 	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
@@ -229,20 +269,69 @@ public:
 	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
 
 	size_t max_size(void) const { return (allocator.max_size()); }
-	iterator get_iterator_at(node_pointer p) const { return (iterator(p, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); }
+	ft::pair<iterator, bool> get_iterator_at(const ft::pair<node_pointer, bool>& p)
+	{
+		return (ft::make_pair<iterator, bool>(iterator(p.first, find_left_most_leaf(root), end_node, find_right_most_leaf(root)), p.second));
+	}
+
+	ft::pair<const_iterator, bool> get_iterator_at(const ft::pair<node_pointer, bool>& p) const
+	{
+		return (ft::make_pair<const_iterator, bool>(iterator(p.first, find_left_most_leaf(root), end_node, find_right_most_leaf(root)), p.second));
+	}
+
+	iterator get_iterator_at(node_pointer p) const
+	{
+		return (iterator(p, find_left_most_leaf(root), end_node, find_right_most_leaf(root)));
+	}
 
 	node_pointer		search(const key_type& key)	const { return (search_from_node(key, root, compare)); }
-	node_pointer 		insert(const value_type& item)
+	ft::pair<node_pointer, bool> 		insert(const value_type& item, const key_type& key)
 	{
+		return (insert(end(), item, key, false));
+	}
+	ft::pair<node_pointer, bool> 		insert(iterator hint, const value_type& item, const key_type& key, bool allowDuplicate)
+	{
+		node_pointer start_from;
+		if (hint != end() && hint != begin())
+		{
+			iterator next_to_hint(hint);
+			++next_to_hint;
+			if (next_to_hint == end())
+			{
+				if (compare(hint.base()->base.getKey(), key))
+					start_from = hint.base();
+				else
+					start_from = root;
+			}
+			else if (allowDuplicate)
+			{
+				if (!compare(key, hint.base()->base.getKey()) && !compare(next_to_hint.base()->base.getKey(), key))
+					start_from = hint.base();
+				else
+					start_from = root;
+			}
+			else if (compare(hint.base()->base.getKey(), key) && compare(key, next_to_hint.base()->base.getKey()))
+				start_from = hint.base();
+			else
+				start_from = root;
+		}
+		else
+			start_from = root;
 		node_pointer z = allocator.allocate(sizeof(*z));
 		allocator.construct(z, node_type(item));
 		node_pointer y = NULL;
-		node_pointer x = root;
+		node_pointer x = start_from;
 		while (x != NULL)
 		{
 			y = x;
 			if (compare(z->base.getKey(), x->base.getKey()))
 				x = x->left_child;
+			else if (!compare(x->base.getKey(), z->base.getKey()))
+			{
+				if (allowDuplicate == true)
+					break ;
+				return (ft::make_pair<node_pointer, bool>(x, false));
+			}
 			else
 				x = x->right_child;
 		}
@@ -254,38 +343,25 @@ public:
 		else
 			y->right_child = z;
 		insert_fixup(z, root);
-		return (z);
+		return (ft::make_pair<node_pointer, bool>(z, true));
 	}
-	node_pointer 		insert(iterator hint, const value_type& item)
-	{
-		node_pointer z = allocator.allocate(sizeof(*z));
-		allocator.construct(z, node_type(item));
-		node_pointer y = NULL;
-		node_pointer x = hint.base();
-		while (x != NULL)
-		{
-			y = x;
-			if (compare(z->base.getKey(), x->base.getKey()))
-				x = x->left_child;
-			else
-				x = x->right_child;
-		}
-		z->parent = y;
-		if (y == NULL)
-			root = z;
-		else if (compare(z->base.getKey(), y->base.getKey()))
-			y->left_child = z;
-		else
-			y->right_child = z;
-		insert_fixup(z, root);
-		return (z);
-	}
-	void 			remove(const key_type& key)
+	bool 			remove(const key_type& key)
 	{
 		node_pointer Node = search(key);
 		if (Node == NULL)
-			return ;
+			return (false);
 		
+		// Node = make_node_leaf(Node, root);
+		// if (Node->color == BLACK)
+		// 	delete_fixup(Node, root);
+		// if (Node->parent)
+		// {
+		// 	if (Node == Node->parent->left_child)
+		// 		Node->parent->left_child = NULL;
+		// 	else
+		// 		Node->parent->right_child = NULL;
+		// }
+
 		if (Node->left_child == NULL && Node->right_child == NULL)
 		{
 			if (Node->parent)
@@ -324,6 +400,18 @@ public:
 			swap_nodes(Node, successor, root);
 			if (Node->color == BLACK)
 			{
+				// node_pointer child = has_one_child(Node);
+				// delete_fixup(child ? child : Node, root);
+				// if (child) // shift the child to this node
+				// 	child->parent = Node->parent;
+				// if (Node->parent)
+				// {
+				// 	if (Node->parent->left_child == Node)
+				// 		Node->parent->left_child = child;
+				// 	else
+				// 		Node->parent->right_child = child;
+				// }
+
 				node_pointer child = has_one_child(Node);
 				if (child) // shift the child to this node
 					child->parent = Node->parent;
@@ -352,6 +440,7 @@ public:
 		}
 		
 		prune_leaf(Node, allocator);
+		return (true);
 	}
 	void clear(void) { delete_from_node(root, allocator); }
 
@@ -362,6 +451,9 @@ private:
 	node_pointer		end_node;
 	key_compare			compare;
 	node_allocator_type	allocator;
+	// keeping track of these values would increase efficiency
+	node_pointer		left_most_leaf;
+	node_pointer		right_most_leaf;
 
 	void	print(const std::string& prefix, node_pointer x, bool isLeft) const
 	{
@@ -377,10 +469,10 @@ private:
 };
 
 // swaps the references but not the data
+// leaves the color as is
 template <class node_pointer>
 void swap_nodes(node_pointer node1, node_pointer node2, node_pointer &root)
 {
-	ft::swap(node1->color, node2->color);
 	if (node1->parent == node2 || node2->parent == node1) // one is the other's parent
 	{
 		if (node1->parent == node2) // so that 1 is 2's parent
@@ -459,6 +551,7 @@ void swap_nodes(node_pointer node1, node_pointer node2, node_pointer &root)
 		else
 			root = node2;
 	}
+	ft::swap(node1->color, node2->color);
 }
 
 template <class node_pointer>
@@ -476,7 +569,7 @@ node_pointer search_from_node(const key_type& key, node_pointer x, key_compare c
 {
 	if (x == NULL)
 		return (NULL);
-	if (key == x->base.getKey())
+	if (!compare(key, x->base.getKey()) && !compare(x->base.getKey(), key))
 		return (x);
 	if (compare(key, x->base.getKey()))
 		return (search_from_node(key, x->left_child, compare));
@@ -537,6 +630,29 @@ void insert_fixup(node_pointer z, node_pointer &root)
 		}
 	}
 	root->color = BLACK;
+}
+
+template <class node_pointer>
+node_pointer make_node_leaf(node_pointer Node, node_pointer &root)
+{
+	if (Node == NULL)
+		return (NULL);
+	if (Node->left_child == NULL && Node->right_child == NULL)
+		return (Node);
+	if (has_one_child(Node))
+	{
+		node_pointer child = has_one_child(Node);
+		swap_nodes(Node, child, root);
+		ft::swap(Node->color, child->color);
+		return (make_node_leaf(Node, root));
+	}
+	else
+	{
+		node_pointer predecessor = get_predecessor(Node);
+		swap_nodes(Node, predecessor, root);
+		ft::swap(Node->color, predecessor->color);
+		return (make_node_leaf(Node, root));
+	}
 }
 
 template <class node_pointer>
@@ -618,12 +734,14 @@ void delete_fixup(node_pointer x, node_pointer &root)
 		else if (niece(x) && niece(x)->color == RED)
 		{
 			niece(x)->color = BLACK;
-			sibling(x)->color = RED;
+			if (sibling(x))
+				sibling(x)->color = RED;
 			rotate_to_parent(sibling(x), root);
 		}
 		else
 		{
-			sibling(x)->color = RED;
+			if (sibling(x))
+				sibling(x)->color = RED;
 			x = x->parent;
 		}
 	}
@@ -743,9 +861,6 @@ void	prune_leaf(node_pointer leaf, Allocator allocator)
 {
 	if (leaf == NULL)
 		return ;
-	#ifndef NDEBUG
-		std::cout << "Removing " << leaf->base.getKey() << std::endl;
-	#endif
 	allocator.destroy(leaf);
 	allocator.deallocate(leaf, sizeof(*leaf));
 }

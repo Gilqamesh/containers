@@ -1,5 +1,7 @@
 #include "AllocationMetrics.hpp"
 
+#include <iostream>
+
 size_t AllocationMetrics::TotalAlloced = 0;
 size_t AllocationMetrics::TotalFreed = 0;
 unsigned int AllocationMetrics::s_AllocedPointersIndex = 0;
@@ -21,7 +23,7 @@ void *operator new(size_t size) throw(std::bad_alloc)
 	return (ret);
 }
 
-void operator delete(void *memory) noexcept
+void operator delete(void *memory) throw()
 {
 	unsigned int index = 0;
 	while (AllocationMetrics::s_AllocedPointers[index].first != memory)

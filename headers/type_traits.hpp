@@ -8,6 +8,10 @@ namespace ft
 template <class T> struct remove_const			{ typedef T type; };
 template <class T> struct remove_const<const T>	{ typedef T type; };
 
+// remove reference
+template <class T> struct remove_reference       { typedef T type; };
+template <class T> struct remove_reference<T &>  { typedef T type; };
+
 // is_integral
 template <typename T, T v>
 struct integral_constant { static const T value = v; };

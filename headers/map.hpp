@@ -93,25 +93,25 @@ public:
 		~value_compare() { }
 		bool operator()(const value_type& lhs, const value_type& rhs) const
 		{
-			return (compare(lhs.first, rhs.second));
+			return (compare(lhs.first, rhs.first));
 		}
 	private:
-		Compare compare;
+		key_compare compare;
 	};
 
 	map()
-		: tree() { } // tested
+		: tree(), allocator(), compare(), map_size(0) { } // tested
 	explicit map(const Compare& comp, const Allocator& alloc = Allocator()) // tested
-		: tree(), allocator(alloc), compare(comp) { }
+		: tree(), allocator(alloc), compare(comp), map_size(0) { }
 	template <class InputIt> // tested
 	map(InputIt first, InputIt last, const Compare& comp = Compare(), const Allocator& alloc = Allocator())
-		: tree(), allocator(alloc), compare(comp)
+		: tree(), allocator(alloc), compare(comp), map_size(0)
 	{
 		while (first != last)
 			insert(*first++);
 	}
 	map(const map& other) // tested
-		: tree(other.tree), allocator(other.allocator), compare(other.compare) { }
+		: tree(other.tree), allocator(other.allocator), compare(other.compare), map_size(other.map_size) { }
 	~map() { }
 	map& operator=(const map& other) // tested
 	{
@@ -120,6 +120,7 @@ public:
 			allocator = other.allocator;
 			tree = other.tree;
 			compare = other.compare;
+			map_size = other.map_size;
 		}
 		return (*this);
 	}
@@ -160,56 +161,66 @@ public:
 
 	// Capacity
 	bool empty() const { return (begin() == end()); } // tested
-	size_type size() const { return (ft::distance(begin(), end())); } // tested
+	size_type size() const { return (map_size); } // tested
 	size_type max_size() const { return (tree.max_size()); } // tested
 
 	// Modifiers
-	void clear() { tree.clear(); } // tested
+	void clear() { tree.clear(); map_size = 0; } // tested
 	ft::pair<iterator, bool> insert(const value_type& value) // tested
 	{
-		iterator ret = find(value.first);
-		if (ret != end())
-			return (ft::make_pair<iterator, bool>(ret, false));
-		ft::pair<iterator, bool> result(ft::make_pair<iterator, bool>(tree.get_iterator_at(tree.insert(value)), false));
-		result.second = (result.first == end() ? false : true);
+		ft::pair<iterator, bool> result(tree.get_iterator_at(tree.insert(value, value.first)));
+		if (result.second == true)
+			++map_size;
 		return (result);
 	}
 	iterator insert(iterator hint, const value_type& value) // tested
 	{
-		iterator ret = find(value.first);
-		if (ret != end())
-			return (ret);
-		return (tree.get_iterator_at(tree.insert(hint, value)));
+		if (!size())
+		{
+			++map_size;
+			return(tree.get_iterator_at(tree.insert(value, value.first)).first);
+		}
+		ft::pair<iterator, bool> ret = tree.get_iterator_at(tree.insert(hint, value, value.first, false));
+		if (ret.second == true)
+			++map_size;
+		return (ret.first);
 	}
 	template <class InputIt>
 	void insert(InputIt first, InputIt last) // tested
 	{
+		iterator hint = begin();
 		while (first != last)
-			insert(*first++);
+			hint = insert(hint, *first++);
 	}
 	void erase(iterator pos) // tested
 	{
-		tree.remove(pos->first);
+		if (tree.remove(pos->first) == true)
+			--map_size;
 	}
 	void erase(iterator first, iterator last) // tested
 	{
 		while (first != last)
 		{
 			iterator cur = first++;
-			tree.remove(cur->first);
+			if (tree.remove(cur->first) == true)
+				--map_size;
 		}
 	}
 	size_type erase(const Key& key) // tested
 	{
-		iterator i = find(key);
-		size_type ret = (i == end() ? 0 : 1);
-		erase(i);
-		return (ret);
+		if (tree.remove(key) == true)
+		{
+			--map_size;
+			return (1);
+		}
+		return (0);
 	}
 	void swap(map& other) // tested
 	{
-		ft::swap(tree, other.tree);
+		tree.swap(other.tree);
 		ft::swap(allocator, other.allocator);
+		ft::swap(compare, other.compare);
+		ft::swap(map_size, other.map_size);
 	}
 
 	// Lookup
@@ -264,7 +275,52 @@ private:
 	red_black_tree<map>		tree;
 	allocator_type			allocator;
 	value_compare			compare;
+	size_type				map_size;
 };
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator==(const ft::map<Key, T, Compare, Alloc>& lhs, const ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	if (lhs.size() != rhs.size())
+		return (false);
+	return (ft::equal(lhs.begin(), lhs.end(), rhs.begin()));
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator!=(const ft::map<Key, T, Compare, Alloc>& lhs, const ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	return (!(lhs == rhs));
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator<(const ft::map<Key, T, Compare, Alloc>& lhs, const ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	return (ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end()));
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator<=(const ft::map<Key, T, Compare, Alloc>& lhs, const ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	return (!(rhs < lhs));
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator>(const ft::map<Key, T, Compare, Alloc>& lhs, const ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	return (rhs < lhs);
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator>=(const ft::map<Key, T, Compare, Alloc>& lhs, const ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	return (!(lhs < rhs));
+}
+
+template <class Key, class T, class Compare, class Alloc>
+void swap(ft::map<Key, T, Compare, Alloc>& lhs, ft::map<Key, T, Compare, Alloc>& rhs)
+{
+	lhs.swap(rhs);
+}
 
 } // ft
 

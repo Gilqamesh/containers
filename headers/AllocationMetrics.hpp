@@ -2,13 +2,15 @@
 # define ALLOCATIONMETRICS_HPP
 
 # include <iostream>
-# define s_AllocedPointersSize 100000
+# define s_AllocedPointersSize 10000000
+
+// Todo: improve bookkeeping of memory addresses
 
 class AllocationMetrics
 {
 public:
 	friend void *operator new(size_t size) throw(std::bad_alloc);
-	friend void operator delete(void *memory) noexcept;
+	friend void operator delete(void *memory) throw();
 	AllocationMetrics();
 	~AllocationMetrics();
 
@@ -23,7 +25,7 @@ private:
 };
 
 void *operator new(size_t size) throw(std::bad_alloc);
-void operator delete(void *memory) noexcept;
+void operator delete(void *memory) throw();
 
 void PrintMemoryUsage(void);
 
