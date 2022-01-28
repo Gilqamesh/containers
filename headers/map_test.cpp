@@ -22,7 +22,7 @@ struct more
 	}
 };
 
-#define TESTED_NAMESPACE ft
+#define TESTED_NAMESPACE std
 
 template <typename Key, typename T>
 std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::map<Key, T>& m)
@@ -38,13 +38,10 @@ int main()
 	{
 		TESTED_NAMESPACE::map<int, int> test;
 		TESTED_NAMESPACE::map<int, int>::iterator hint = test.begin();
-		TESTED_NAMESPACE::vector<TESTED_NAMESPACE::pair<int, int> > pairs;
 		for (size_t i = 0; i < 10000000; ++i)
 		{
-			pairs.push_back(TESTED_NAMESPACE::make_pair<int, int>(i ,i));
+			test.insert(TESTED_NAMESPACE::make_pair<int, int>(i ,i));
 		}
-		PRINT_HERE();
-		test.insert(pairs.begin(), pairs.end());
 	}
 	// PrintMemoryUsage();
 }
