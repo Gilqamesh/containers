@@ -259,29 +259,29 @@ public:
 		other.right_most_leaf = tmp_right_most;
 	}
 
-	iterator		 begin(void)  { return (iterator		(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
-	iterator		 end(void)	  { return (iterator		(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
-	reverse_iterator rbegin(void) { return (reverse_iterator(iterator(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
-	reverse_iterator rend(void)	  { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
-	const_iterator		   begin(void) 	const { return (iterator		(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root)));		}
-	const_iterator		   end(void) 	const { return (iterator		(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))); 						}
-	const_reverse_iterator rbegin(void) const { return (reverse_iterator(iterator(end_node, find_left_most_leaf(root), end_node, find_right_most_leaf(root))));	}
-	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(find_left_most_leaf(root), find_left_most_leaf(root), end_node, find_right_most_leaf(root))));					}
+	iterator		 begin(void)  { return (iterator		(left_most_leaf, left_most_leaf, end_node, right_most_leaf)); }
+	iterator		 end(void)	  { return (iterator		(end_node, left_most_leaf, end_node, right_most_leaf)); }
+	reverse_iterator rbegin(void) { return (reverse_iterator(iterator(end_node, left_most_leaf, end_node, right_most_leaf))); }
+	reverse_iterator rend(void)	  { return (reverse_iterator(iterator(left_most_leaf, left_most_leaf, end_node, right_most_leaf))); }
+	const_iterator		   begin(void) 	const { return (iterator		(left_most_leaf, left_most_leaf, end_node, right_most_leaf)); }
+	const_iterator		   end(void) 	const { return (iterator		(end_node, left_most_leaf, end_node, right_most_leaf)); }
+	const_reverse_iterator rbegin(void) const { return (reverse_iterator(iterator(end_node, left_most_leaf, end_node, right_most_leaf))); }
+	const_reverse_iterator rend(void) 	const { return (reverse_iterator(iterator(left_most_leaf, left_most_leaf, end_node, right_most_leaf))); }
 
 	size_t max_size(void) const { return (allocator.max_size()); }
 	ft::pair<iterator, bool> get_iterator_at(const ft::pair<node_pointer, bool>& p)
 	{
-		return (ft::make_pair<iterator, bool>(iterator(p.first, find_left_most_leaf(root), end_node, find_right_most_leaf(root)), p.second));
+		return (ft::make_pair<iterator, bool>(iterator(p.first, left_most_leaf, end_node, right_most_leaf), p.second));
 	}
 
 	ft::pair<const_iterator, bool> get_iterator_at(const ft::pair<node_pointer, bool>& p) const
 	{
-		return (ft::make_pair<const_iterator, bool>(iterator(p.first, find_left_most_leaf(root), end_node, find_right_most_leaf(root)), p.second));
+		return (ft::make_pair<const_iterator, bool>(iterator(p.first, left_most_leaf, end_node, right_most_leaf), p.second));
 	}
 
 	iterator get_iterator_at(node_pointer p) const
 	{
-		return (iterator(p, find_left_most_leaf(root), end_node, find_right_most_leaf(root)));
+		return (iterator(p, left_most_leaf, end_node, right_most_leaf));
 	}
 
 	node_pointer		search(const key_type& key)	const { return (search_from_node(key, root, compare)); }
@@ -343,6 +343,20 @@ public:
 		else
 			y->right_child = z;
 		insert_fixup(z, root);
+		if (left_most_leaf)
+		{
+			if (compare(z->base.getKey(), left_most_leaf->base.getKey()))
+				left_most_leaf = z;
+		}
+		else
+			left_most_leaf = z;
+		if (right_most_leaf)
+		{
+			if (compare(right_most_leaf->base.getKey(), z->base.getKey()))
+				right_most_leaf = z;
+		}
+		else
+			right_most_leaf = z;
 		return (ft::make_pair<node_pointer, bool>(z, true));
 	}
 	bool 			remove(const key_type& key)
@@ -439,10 +453,16 @@ public:
 			}
 		}
 		
+		bool isLeftMost = (left_most_leaf == Node);
+		bool isRightMost = (right_most_leaf == Node);
 		prune_leaf(Node, allocator);
+		if (isLeftMost == true)
+			left_most_leaf = find_left_most_leaf(root);
+		if (isRightMost == true)
+			right_most_leaf = find_right_most_leaf(root);
 		return (true);
 	}
-	void clear(void) { delete_from_node(root, allocator); }
+	void clear(void) { delete_from_node(root, allocator); left_most_leaf = NULL; right_most_leaf = NULL; }
 
 	// DEBUG
 	void print(void) const { print("", root, false); }
