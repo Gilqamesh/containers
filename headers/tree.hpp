@@ -5,6 +5,7 @@
 # include "algorithm.hpp"
 # include "utility.hpp"
 # include "iterator.hpp"
+# include "type_traits.hpp"
 # include <string>
 
 # include <iostream>
@@ -158,7 +159,6 @@ class red_black_tree
 {
 public:
 	typedef typename NodeContainer::key_type							key_type;
-	typedef typename NodeContainer::mapped_type							mapped_type;
 	typedef typename NodeContainer::value_type							value_type;
 	typedef typename NodeContainer::size_type							size_type;
 	typedef typename NodeContainer::key_compare							key_compare;
@@ -289,12 +289,12 @@ public:
 	{
 		return (insert(end(), item, key, false));
 	}
-	ft::pair<node_pointer, bool> 		insert(iterator hint, const value_type& item, const key_type& key, bool allowDuplicate)
+	ft::pair<node_pointer, bool> 		insert(const_iterator hint, const value_type& item, const key_type& key, bool allowDuplicate)
 	{
 		node_pointer start_from;
 		if (hint != end() && hint != begin())
 		{
-			iterator next_to_hint(hint);
+			const_iterator next_to_hint(hint);
 			++next_to_hint;
 			if (next_to_hint == end())
 			{

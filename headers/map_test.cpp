@@ -7,6 +7,7 @@
 # include <vector>
 // # include "AllocationMetrics.hpp"
 # include "vector.hpp"
+# include <set>
 
 #ifndef PRINT_HERE
 # define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
@@ -36,12 +37,14 @@ int main()
 {
 	// PrintMemoryUsage();
 	{
-		TESTED_NAMESPACE::map<int, int> test;
-		TESTED_NAMESPACE::map<int, int>::iterator hint = test.begin();
-		for (size_t i = 0; i < 10000000; ++i)
-		{
-			test.insert(TESTED_NAMESPACE::make_pair<int, int>(i ,i));
-		}
+		// TESTED_NAMESPACE::map<int, int> test;
+		// TESTED_NAMESPACE::map<int, int>::iterator hint = test.begin();
+		// for (size_t i = 0; i < 10000000; ++i)
+		// {
+		// 	test.insert(TESTED_NAMESPACE::make_pair<int, int>(i ,i));
+		// }
+		ft::map<int, int> test;
+		ft::map<int, int>::reverse_iterator rit(test.begin());
 	}
 	// PrintMemoryUsage();
 }
