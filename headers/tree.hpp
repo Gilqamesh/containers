@@ -14,10 +14,6 @@
 namespace ft
 {
 
-// DEBUGGING
-extern bool visitedIfs[21];
-# define leakCheck() ({std::cout << __FILE__ << " " << __LINE__ << " " << std::endl; system("leaks mycontainer | tail -10");})
-
 // T pair
 template <typename NodePtr, typename T>
 class tree_iterator
@@ -364,16 +360,6 @@ public:
 		node_pointer Node = search(key);
 		if (Node == NULL)
 			return (false);
-		// Node = make_node_leaf(Node, root);
-		// if (Node->color == BLACK)
-		// 	delete_fixup(Node, root);
-		// if (Node->parent)
-		// {
-		// 	if (Node == Node->parent->left_child)
-		// 		Node->parent->left_child = NULL;
-		// 	else
-		// 		Node->parent->right_child = NULL;
-		// }
 
 		if (Node->left_child == NULL && Node->right_child == NULL)
 		{
@@ -413,18 +399,6 @@ public:
 			swap_nodes(Node, successor, root);
 			if (Node->color == BLACK)
 			{
-				// node_pointer child = has_one_child(Node);
-				// delete_fixup(child ? child : Node, root);
-				// if (child) // shift the child to this node
-				// 	child->parent = Node->parent;
-				// if (Node->parent)
-				// {
-				// 	if (Node->parent->left_child == Node)
-				// 		Node->parent->left_child = child;
-				// 	else
-				// 		Node->parent->right_child = child;
-				// }
-
 				node_pointer child = has_one_child(Node);
 				if (child) // shift the child to this node
 					child->parent = Node->parent;
@@ -474,7 +448,6 @@ private:
 	node_pointer		end_node;
 	key_compare			compare;
 	node_allocator_type	allocator;
-	// keeping track of these values would increase efficiency
 	node_pointer		left_most_leaf;
 	node_pointer		right_most_leaf;
 
@@ -491,8 +464,7 @@ private:
 	}
 };
 
-// swaps the references but not the data
-// leaves the color as is
+// swaps everything but the underlying data of the nodes
 template <class node_pointer>
 void swap_nodes(node_pointer node1, node_pointer node2, node_pointer &root)
 {

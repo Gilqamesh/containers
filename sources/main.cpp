@@ -5,14 +5,21 @@
 #include <map>
 #include <stack>
 #include <vector>
+#include <set>
 #include "map.hpp"
 #include "stack.hpp"
 #include "vector.hpp"
+#include "set.hpp"
 #define TESTED_NAMESPACE ft
 #ifdef STDSTL
 # undef TESTED_NAMESPACE
 # define TESTED_NAMESPACE std
 #endif
+
+# define VECTOR_TEST	1
+# define MAP_TEST		1
+# define STACK_TEST		1
+# define SET_TEST		1
 
 #include <stdlib.h>
 
@@ -20,47 +27,14 @@
 # define LOG(x) (std::cout << x << std::endl)
 #endif
 
-#ifndef MAX_RAM
-# define MAX_RAM 4294967296
-#endif
-#ifndef BUFFER_SIZE
-# define BUFFER_SIZE 4096
-#endif
-struct Buffer
-{
-	int idx;
-	char buff[BUFFER_SIZE];
-};
-
-#define COUNT (MAX_RAM / (int)sizeof(Buffer))
-
-template<typename T>
-class MutantStack : public TESTED_NAMESPACE::stack<T>
-{
-public:
-	MutantStack() {}
-	MutantStack(const MutantStack<T>& src) { *this = src; }
-	MutantStack<T>& operator=(const MutantStack<T>& rhs) 
-	{
-		this->c = rhs.c;
-		return *this;
-	}
-	~MutantStack() {}
-
-	typedef typename TESTED_NAMESPACE::stack<T>::container_type::iterator iterator;
-
-	iterator begin() { return this->c.begin(); }
-	iterator end() { return this->c.end(); }
-};
-
 template <typename T>
 std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::vector<T>& v);
 template <typename Key, typename T>
 std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::map<Key, T>& m);
 template <typename first, typename second>
 std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::pair<first, second>& p);
-
-bool ft::visitedIfs[21];
+template <typename Key>
+std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::set<Key>& s);
 
 int main(int argc, char** argv)
 {
@@ -68,13 +42,12 @@ int main(int argc, char** argv)
 	{
 		std::cerr << "Usage: ./test seed" << std::endl;
 		std::cerr << "Provide a seed please" << std::endl;
-		std::cerr << "Count value: " << COUNT << std::endl;
 		return (1);
 	}
 	const int seed = atoi(argv[1]);
 	srand(seed);
 
-	#if 0
+	#if VECTOR_TEST
 	// Vector
 	{
 	// Basic functionality
@@ -236,7 +209,7 @@ int main(int argc, char** argv)
 	#endif
 	#endif // vector test
 
-	#if 1
+	#if MAP_TEST
 	// Map
 	{
 	// Basic functionality
@@ -392,7 +365,172 @@ int main(int argc, char** argv)
 		system("leaks defaultcontainer | tail -3");
 	#endif
 	#endif // map test
+
+	#if STACK_TEST
+	{ // Stack
+	// Basic functionality
+		TESTED_NAMESPACE::stack<int> stackTest;
+		LOG("stackTest.size(): " << stackTest.size() << " stackTest.empty(): " << stackTest.empty());
+		LOG("Pushing 100 elements to stackTest");
+		for (size_t i = 0; i < 100; ++i)
+		{
+			stackTest.push(std::rand() % 10000);
+			std::cout << stackTest.top() << " ";
+		}
+		std::cout << std::endl;
+		TESTED_NAMESPACE::stack<int> stackTest2(stackTest);
+		LOG("stackTest2(stackTest);");
+		LOG("stackTest2.size(): " << stackTest2.size() << " stackTest2.empty(): " << stackTest2.empty());
+		LOG("stackTest.size(): " << stackTest.size() << " stackTest.empty(): " << stackTest.empty());
+		LOG("Popping 100 elements from stackTest");
+		while (!stackTest.empty())
+		{
+			std::cout << stackTest.top() << " ";
+			stackTest.pop();
+		}
+		std::cout << std::endl;
+		LOG("stackTest.size(): " << stackTest.size() << " stackTest.empty(): " << stackTest.empty());
+		LOG("stackTest2 = stackTest;"); stackTest2 = stackTest;
+		LOG("stackTest2.size(): " << stackTest2.size() << " stackTest2.empty(): " << stackTest2.empty());
+	}
+	LOG("Leak check:");
+	#ifndef STDSTL
+		system("leaks mycontainer | tail -3");
+	#else
+		system("leaks defaultcontainer | tail -3");
+	#endif
+	#endif // stack test
 	
+	#if SET_TEST
+	// Set
+	{
+	// Basic functionality
+		TESTED_NAMESPACE::set<int> setTest;
+		// non-iterator, non-hint insert
+			TESTED_NAMESPACE::pair<TESTED_NAMESPACE::set<int>::iterator, bool> setPair = setTest.insert(5);
+			LOG("Inserting 5: " << *setPair.first << " successful insertion: " << setPair.second);
+			setPair = setTest.insert(5);
+			LOG("Inserting 5: " << *setPair.first << " successful insertion: " << setPair.second);
+			LOG("setTest: " << setTest);
+		// empty, size, max_size, clear
+			TESTED_NAMESPACE::set<int> setTest2;
+			LOG("setTest.empty(): " << setTest.empty());
+			LOG("setTest2.empty(): " << setTest2.empty());
+			LOG("setTest.size(): " << setTest.size());
+			LOG("setTest.max_size(): " << setTest.max_size());
+			LOG("setTest.clear();"); setTest.clear();
+			LOG("setTest: " << setTest);
+		// order check
+			LOG("setTest.insert(42);"); setTest.insert(42);
+			LOG("setTest.insert(-1);"); setTest.insert(-1);
+			LOG("setTest.insert(11);"); setTest.insert(11);
+			LOG("setTest.insert(0);"); setTest.insert(0);
+			LOG("setTest.insert(14);"); setTest.insert(14);
+			LOG("setTest.size(): " << setTest.size());
+			LOG("setTest: " << setTest);
+		// iterators, copy constructor, assignment operator
+			LOG("for (TESTED_NAMESPACE::set<int>::const_iterator cit = setTest.begin(); cit != setTest.end(); ++cit)"\
+				"\n\tLOG(*cit);\n{");
+			for (TESTED_NAMESPACE::set<int>::const_iterator cit = setTest.begin(); cit != setTest.end(); ++cit)
+				LOG("\t" << *cit);
+			LOG("}");
+			TESTED_NAMESPACE::set<int> setTest3(setTest);
+			LOG("setTest3(setTest): " << setTest3);
+		// lower bound, upper bound, equal range
+			LOG("setTest.lower_bound(0): " << *setTest.lower_bound(0));
+			LOG("setTest.lower_bound(1): " << *setTest.lower_bound(1));
+			LOG("setTest.upper_bound(0): " << *setTest.upper_bound(0));
+			LOG("setTest.upper_bound(1): " << *setTest.upper_bound(1));
+			TESTED_NAMESPACE::pair<TESTED_NAMESPACE::set<int>::const_iterator,
+				TESTED_NAMESPACE::set<int>::const_iterator> constIterPair = setTest.equal_range(0);
+			LOG("setTest.equal_range(0): " << *constIterPair.first << " " << *constIterPair.second);
+			constIterPair = setTest.equal_range(1);
+			LOG("setTest.equal_range(1): " << *constIterPair.first << " " << *constIterPair.second);
+		// erase, swap
+			LOG("setTest.erase(100): " << setTest.erase(100));
+			LOG("setTest.erase(0): " << setTest.erase(0));
+			LOG("setTest.erase(-123): " << setTest.erase(-123));
+			LOG("setTest.erase(14): " << setTest.erase(14));
+			LOG("setTest: " << setTest);
+			LOG("setTest.swap(setTest3);"); setTest.swap(setTest3);
+			LOG("setTest: " << setTest);
+			LOG("setTest3: " << setTest3);
+			LOG("setTest.size(): " << setTest.size() << " setTest3.size(): " << setTest3.size());
+			LOG("swap(setTest, setTest3);"); swap(setTest, setTest3);
+			LOG("setTest: " << setTest);
+			LOG("setTest3: " << setTest3);
+			LOG("setTest.size(): " << setTest.size() << " setTest3.size(): " << setTest3.size());
+		// count, find
+			LOG("setTest3.count(0): " << setTest3.count(0));
+			LOG("setTest3.count(1): " << setTest3.count(1));
+			LOG("setTest3.count(2): " << setTest3.count(2));
+			LOG("setTest3.count(14): " << setTest3.count(14));
+			if (setTest3.find(0) == setTest3.end())
+				LOG("setTest3.find(0): -");
+			else
+				LOG("setTest3.find(0): " << *setTest3.find(0));
+			if (setTest3.find(1) == setTest3.end())
+				LOG("setTest3.find(1): -");
+			else
+				LOG("setTest3.find(1): " << *setTest3.find(1));
+			if (setTest3.find(2) == setTest3.end())
+				LOG("setTest3.find(2): -");
+			else
+				LOG("setTest3.find(2): " << *setTest3.find(2));
+			if (setTest3.find(14) == setTest3.end())
+				LOG("setTest3.find(14): -");
+			else
+				LOG("setTest3.find(14): " << *setTest3.find(14));
+		// compare operators
+			LOG("setTest == setTest3: " << (setTest == setTest3));
+			LOG("setTest != setTest3: " << (setTest != setTest3));
+			LOG("setTest < setTest3: " << (setTest < setTest3));
+			LOG("setTest <= setTest3: " << (setTest <= setTest3));
+			LOG("setTest > setTest3: " << (setTest > setTest3));
+			LOG("setTest >= setTest3: " << (setTest >= setTest3));
+		// key_comp, value_comp
+			TESTED_NAMESPACE::set<int>::key_compare setKeyComp = setTest.key_comp();
+			TESTED_NAMESPACE::set<int>::value_compare setValueComp = setTest.value_comp();
+			LOG("setKeyComp(3, 6): " << setKeyComp(3, 6));
+			LOG("setValueComp(*setTest3.find(0), *setTest3.find(14)): " << setValueComp.operator()(*setTest3.find(0), *setTest3.find(14)));
+			LOG("setValueComp(*setTest3.find(14), *setTest3.find(0)): " << setValueComp.operator()(*setTest3.find(14), *setTest3.find(0)));
+	// Performance test
+		LOG("Insert 10.000.000 pairs without hint");
+		clock_t begin = std::clock();
+		for (size_t i = 0; i < 10000000; ++i)
+			setTest.insert(std::rand() % 1000000);
+		LOG("setTest.size(): " << setTest.size());
+		LOG("Time taken: " << static_cast<double>((std::clock() - begin)) / CLOCKS_PER_SEC << " seconds");
+
+		LOG("setTest4(setTest);");
+		begin = std::clock();
+		TESTED_NAMESPACE::set<int> setTest4(setTest);
+		LOG("Time taken: " << static_cast<double>((std::clock() - begin)) / CLOCKS_PER_SEC << " seconds");
+
+		LOG("setTest4.clear();");
+		begin = std::clock();
+		setTest4.clear();
+		LOG("Time taken: " << static_cast<double>((std::clock() - begin)) / CLOCKS_PER_SEC << " seconds");
+
+		LOG("Iterator insert from mapTest to mapTest5");
+		begin = std::clock();
+		TESTED_NAMESPACE::set<int> setTest5(setTest.begin(), setTest.end());
+		LOG("setTest5.size(): " << setTest5.size());
+		LOG("Time taken: " << static_cast<double>((std::clock() - begin)) / CLOCKS_PER_SEC << " seconds");
+
+		LOG("Erase 10.000.000 random elements");
+		begin = std::clock();
+		for (size_t i = 0; i < 10000000; ++i)
+			setTest.erase(std::rand() % 10000000);
+		LOG("setTest.size(): " << setTest.size());
+	}
+	LOG("Leak check:");
+	#ifndef STDSTL
+		system("leaks mycontainer | tail -3");
+	#else
+		system("leaks defaultcontainer | tail -3");
+	#endif
+	#endif // set test
 
 	return (0);
 }
@@ -417,5 +555,13 @@ template <typename first, typename second>
 std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::pair<first, second>& p)
 {
 	os << "[" << p.first << ", " << p.second << "]";
+	return (os);
+}
+
+template <typename Key>
+std::ostream &operator<<(std::ostream &os, const TESTED_NAMESPACE::set<Key>& s)
+{
+	for (typename TESTED_NAMESPACE::set<Key>::const_iterator cit = s.begin(); cit != s.end(); ++cit)
+		os << *cit << " ";
 	return (os);
 }

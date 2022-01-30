@@ -20,7 +20,9 @@ $(NAME2): $(ODIR)/main2.o
 $(ODIR)/main2.o: $(SDIR)/main.cpp $(HDIR)/*.hpp
 	cd $(ODIR) && $(CC) -D STDSTL $(INCLUDES) $(CFLAGS) -c ../$< -o main2.o
 
-.PHONY: clean fclean re
+.PHONY: clean fclean re bonus all
+all:
+	make
 clean:
 	rm -f $(ODIR)/*.o
 fclean: clean
@@ -28,3 +30,5 @@ fclean: clean
 re:
 	make fclean
 	make project
+bonus:
+	make

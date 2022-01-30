@@ -8,9 +8,6 @@
 # include "iterator.hpp"
 # include "algorithm.hpp"
 
-#include <iostream>
-#define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
-
 namespace ft
 {
 
@@ -153,6 +150,8 @@ public:
 	vector(const vector& other) // tested
 		: start(NULL), finish(NULL), end_of_storage(NULL), allocator(other.allocator)
 	{
+		if (!other.capacity())
+			return ;
 		start = allocator.allocate(other.finish - other.start);
 		finish = start + (other.finish - other.start);
 		end_of_storage = finish;
@@ -250,7 +249,7 @@ public:
 
 	// Capacity
 	bool		empty(void) const { return (start == finish); } // tested
-	size_type	size(void) const { return (finish - start);  } // tested
+	size_type	size(void) const { return (finish - start); } // tested
 	size_type	max_size(void) const { return (allocator.max_size()); } // tested, works if vector is not nested
 	void		reserve(size_type new_cap) // tested
 	{
@@ -263,11 +262,11 @@ public:
 				allocator.construct(newStart.base() + i, *(start + i));
 			for (size_type i = 0; i < size(); ++i)
 				allocator.destroy(start.base() + i);
-			if (capacity() > 0)
+			if (end_of_storage.base())
 				allocator.deallocate(start.base(), capacity());
 			finish = newStart + size();
 			start = newStart;
-			end_of_storage = newStart + new_cap;
+			end_of_storage = start + new_cap;
 		}
 	}
 	size_type	capacity(void) const { return (static_cast<size_type>(end_of_storage - start)); } // tested
