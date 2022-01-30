@@ -7,9 +7,6 @@
 # include "algorithm.hpp"
 # include "tree.hpp"
 
-# include <iostream>
-# define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
-
 namespace ft
 {
 
@@ -48,15 +45,8 @@ private:
 template <class Key, class T, class Compare = typename ft::less<Key>, class Allocator = typename std::allocator<ft::pair<const Key, T> > >
 class map
 {
-friend class map_node<map>;
-friend class red_black_tree<map>;
-private:
-	typedef map_node<map>												base_node_type;
-	typedef map_node<map>*												base_node_pointer;
-	typedef const map_node<map>*										base_node_const_pointer;
-	typedef map_node<map>&												base_node_reference;
-	typedef const map_node<map>&										base_node_const_reference;
 public:
+	typedef map_node<map>												node_type;
 	typedef Key															key_type;
 	typedef T															mapped_type;
 	typedef typename ft::pair<const Key, T>								value_type;
@@ -129,21 +119,21 @@ public:
 	// Element access
 	T &at(const Key& key) // tested
 	{
-		node<base_node_type> *p = tree.search(key);
+		node<node_type> *p = tree.search(key);
 		if (p == NULL)
 			throw std::out_of_range("The key is not in the map");
 		return (p->base.data.second);
 	}
 	const T& at(const Key& key) const // tested
 	{
-		const node<base_node_type> *p = tree.search(key);
+		const node<node_type> *p = tree.search(key);
 		if (p == NULL)
 			throw std::out_of_range("The key is not in the map");
 		return (p->base.data.second);
 	}
 	T& operator[](const Key& key) // tested
 	{
-		node<base_node_type> *p = tree.search(key);
+		node<node_type> *p = tree.search(key);
 		if (p == NULL)
 			return (insert(ft::make_pair<const Key, T>(key, T())).first->second);
 		return (p->base.data.second);
@@ -169,6 +159,7 @@ public:
 	ft::pair<iterator, bool> insert(const value_type& value) // tested
 	{
 		ft::pair<iterator, bool> result(tree.get_iterator_at(tree.insert(value, value.first)));
+
 		if (result.second == true)
 			++map_size;
 		return (result);
@@ -269,13 +260,14 @@ public:
 	key_compare key_comp() const { return (key_compare()); }
 	value_compare value_comp() const { return (compare); }
 
-	// DEBUG
-	void	  print() const { tree.print(); }
 private:
 	red_black_tree<map>		tree;
 	allocator_type			allocator;
 	value_compare			compare;
 	size_type				map_size;
+
+	// DEBUG
+	void	  print() const { tree.print(); }
 };
 
 template <class Key, class T, class Compare, class Alloc>

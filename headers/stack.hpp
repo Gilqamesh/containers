@@ -42,7 +42,7 @@ public:
 	void push(const value_type& value) { c.push_back(value); }
 	void pop() { c.pop_back(); }
 
-private:
+protected:
 	container_type	c;
 
 template <class T1, class C1>

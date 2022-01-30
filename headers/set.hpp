@@ -43,15 +43,8 @@ private:
 template <class Key, class Compare = ft::less<Key>, class Allocator = std::allocator<Key> >
 class set
 {
-friend class set_node<set>;
-friend class red_black_tree<set>;
-private:
-	typedef set_node<set>											base_node_type;
-	typedef set_node<set>*											base_node_pointer;
-	typedef const set_node<set>*									base_node_const_pointer;
-	typedef set_node<set>&											base_node_reference;
-	typedef const set_node<set>&									base_node_const_reference;
 public:
+	typedef set_node<set>											node_type;
 	typedef Key														key_type;
 	typedef Key														value_type;
 	typedef std::size_t												size_type;

@@ -14,6 +14,10 @@
 namespace ft
 {
 
+// DEBUGGING
+extern bool visitedIfs[21];
+# define leakCheck() ({std::cout << __FILE__ << " " << __LINE__ << " " << std::endl; system("leaks mycontainer | tail -10");})
+
 // T pair
 template <typename NodePtr, typename T>
 class tree_iterator
@@ -168,11 +172,11 @@ public:
 	typedef typename NodeContainer::pointer								pointer;
 	typedef typename NodeContainer::const_pointer						const_pointer;
 
-	typedef typename NodeContainer::base_node_type						base_node_type;
-	typedef typename NodeContainer::base_node_pointer					base_node_pointer;
-	typedef typename NodeContainer::base_node_const_pointer				base_node_const_pointer;
-	typedef typename NodeContainer::base_node_reference					base_node_reference;
-	typedef typename NodeContainer::base_node_const_reference			base_node_const_reference;
+	typedef typename NodeContainer::node_type							base_node_type;
+	typedef base_node_type*												base_node_pointer;
+	typedef const base_node_type*										base_node_const_pointer;
+	typedef base_node_type&												base_node_reference;
+	typedef const base_node_type&										base_node_const_reference;
 
 	typedef node<base_node_type>										node_type;
 	typedef node<base_node_type>*										node_pointer;
@@ -186,28 +190,20 @@ public:
 	typedef ft::reverse_iterator<iterator>								reverse_iterator;
 	typedef ft::reverse_iterator<const_iterator>						const_reverse_iterator;
 
-/*
-	node_pointer		root;
-	node_pointer		end_node;
-	key_compare			compare;
-	node_allocator_type	allocator;
-	// keeping track of these values would increase efficiency
-	node_pointer		left_most_leaf;
-	node_pointer		right_most_leaf;
-*/
 	red_black_tree()
 		: root(NULL), end_node(NULL), compare(), allocator(), left_most_leaf(NULL), right_most_leaf(NULL)
 	{
-		end_node = allocator.allocate(sizeof(*end_node));
+		end_node = allocator.allocate(1);
 		allocator.construct(end_node, node_type());
 	}
 	red_black_tree(const red_black_tree& other)
 		: root(NULL), end_node(NULL), compare(other.compare), allocator(other.allocator), left_most_leaf(NULL), right_most_leaf(NULL)
 	{
-		end_node = allocator.allocate(sizeof(*end_node));
+		end_node = allocator.allocate(1);
 		allocator.construct(end_node, node_type());
+		const_iterator hint = begin();
 		for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
-			insert(*c_it, c_it.base()->base.getKey());
+			hint = get_iterator_at(insert(hint, *c_it, c_it.base()->base.getKey(), true).first);
 		left_most_leaf = find_left_most_leaf(root);
 		right_most_leaf = find_right_most_leaf(root);
 	}
@@ -217,7 +213,7 @@ public:
 		if (end_node)
 		{
 			allocator.destroy(end_node);
-			allocator.deallocate(end_node, sizeof(*end_node));
+			allocator.deallocate(end_node, 1);
 		}
 		root = NULL;
 		end_node = NULL;
@@ -229,8 +225,9 @@ public:
 		if (this != &other)
 		{
 			delete_from_node(root, allocator);
+			iterator hint = begin();
 			for (const_iterator c_it = other.begin(); c_it != other.end(); ++c_it)
-				insert(*c_it, c_it.base()->base.getKey());
+				hint = get_iterator_at(insert(hint, *c_it, c_it.base()->base.getKey(), true).first);
 			left_most_leaf = find_left_most_leaf(root);
 			right_most_leaf = find_right_most_leaf(root);
 		}
@@ -317,7 +314,7 @@ public:
 		}
 		else
 			start_from = root;
-		node_pointer z = allocator.allocate(sizeof(*z));
+		node_pointer z = allocator.allocate(1);
 		allocator.construct(z, node_type(item));
 		node_pointer y = NULL;
 		node_pointer x = start_from;
@@ -330,6 +327,8 @@ public:
 			{
 				if (allowDuplicate == true)
 					break ;
+				allocator.destroy(z);
+				allocator.deallocate(z, 1);
 				return (ft::make_pair<node_pointer, bool>(x, false));
 			}
 			else
@@ -342,6 +341,7 @@ public:
 			y->left_child = z;
 		else
 			y->right_child = z;
+		
 		insert_fixup(z, root);
 		if (left_most_leaf)
 		{
@@ -364,7 +364,6 @@ public:
 		node_pointer Node = search(key);
 		if (Node == NULL)
 			return (false);
-		
 		// Node = make_node_leaf(Node, root);
 		// if (Node->color == BLACK)
 		// 	delete_fixup(Node, root);
@@ -441,21 +440,25 @@ public:
 				else
 					delete_fixup(Node->parent, root);
 			}
-			else 
+			else
 			{
+				node_pointer child = has_one_child(Node);
+				if (child)
+					child->parent = Node->parent;
 				if (Node->parent)
 				{
 					if (Node->parent->left_child == Node)
-						Node->parent->left_child = NULL;
+						Node->parent->left_child = child;
 					else
-						Node->parent->right_child = NULL;
+						Node->parent->right_child = child;
 				}
 			}
 		}
-		
+
 		bool isLeftMost = (left_most_leaf == Node);
 		bool isRightMost = (right_most_leaf == Node);
 		prune_leaf(Node, allocator);
+
 		if (isLeftMost == true)
 			left_most_leaf = find_left_most_leaf(root);
 		if (isRightMost == true)
@@ -725,7 +728,7 @@ void delete_from_node(node_pointer &x, Allocator allocator)
 	if (x->right_child)
 		delete_from_node(x->right_child, allocator);
 	allocator.destroy(x);
-	allocator.deallocate(x, sizeof(*x));
+	allocator.deallocate(x, 1);
 	x = NULL;
 }
 
@@ -882,7 +885,7 @@ void	prune_leaf(node_pointer leaf, Allocator allocator)
 	if (leaf == NULL)
 		return ;
 	allocator.destroy(leaf);
-	allocator.deallocate(leaf, sizeof(*leaf));
+	allocator.deallocate(leaf, 1);
 }
 
 } // ft

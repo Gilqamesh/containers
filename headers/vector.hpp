@@ -8,8 +8,8 @@
 # include "iterator.hpp"
 # include "algorithm.hpp"
 
-# include <iostream>
-# define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
+#include <iostream>
+#define PRINT_HERE() (std::cout << __FILE__ << " " << __LINE__ << std::endl)
 
 namespace ft
 {
@@ -164,9 +164,6 @@ public:
 		for (difference_type i = 0; i < finish - start; ++i)
 			allocator.destroy(start.base() + i);
 		allocator.deallocate(start.base(), capacity());
-		start = NULL;
-		finish = NULL;
-		end_of_storage = NULL;
 	}
 	vector &operator=(const vector& other) // tested
 	{
@@ -238,8 +235,8 @@ public:
 	const_reference	front(void) const { return (*start);	 }
 	reference		back(void)		  { return (*(finish - 1)); } // tested
 	const_reference	back(void)  const { return (*(finish - 1)); }
-	pointer			data(void)		  { return (start);		 } // tested
-	const_pointer	data(void) const  { return (start);		 }
+	pointer			data(void)		  { return (start.base());		 } // tested
+	const_pointer	data(void) const  { return (start.base());		 }
 
 	// Iterators
 	iterator				begin(void) 	   { return (start);  } // tested
@@ -273,7 +270,7 @@ public:
 			end_of_storage = newStart + new_cap;
 		}
 	}
-	size_type	capacity(void) const { return (end_of_storage - start); } // tested
+	size_type	capacity(void) const { return (static_cast<size_type>(end_of_storage - start)); } // tested
 
 	// Modifiers
 	void		clear(void) { erase(begin(), end()); } // tested
@@ -431,15 +428,6 @@ template <typename T, typename Alloc> // tested
 void swap(vector<T, Alloc>& lhs, vector<T, Alloc>& rhs)
 {
 	lhs.swap(rhs);
-}
-
-// DEBUG
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const vector<T>& v)
-{
-	for (typename vector<T>::const_iterator i = v.begin(); i != v.end(); ++i)
-		os << *i << " ";
-	return (os);
 }
 
 } // ft

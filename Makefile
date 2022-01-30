@@ -13,12 +13,12 @@ project: $(BINARIES)
 $(NAME): $(ODIR)/main.o
 	$(CC) -o $@ $^
 $(ODIR)/main.o: $(SDIR)/main.cpp $(HDIR)/*.hpp
-	cd $(ODIR) && $(CC) $(INCLUDES) $(CFLAGS) -c ../$<
+	cd $(ODIR) && $(CC) $(INCLUDES) $(CFLAGS) -c ../$< -o main.o
 
 $(NAME2): $(ODIR)/main2.o
 	$(CC) -o $@ $^
 $(ODIR)/main2.o: $(SDIR)/main.cpp $(HDIR)/*.hpp
-	cd $(ODIR) && $(CC) -D STDSTL $(INCLUDES) $(CFLAGS) -c ../$<
+	cd $(ODIR) && $(CC) -D STDSTL $(INCLUDES) $(CFLAGS) -c ../$< -o main2.o
 
 .PHONY: clean fclean re
 clean:
